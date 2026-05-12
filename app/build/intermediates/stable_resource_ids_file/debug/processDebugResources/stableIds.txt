@@ -1,0 +1,8 @@
+com.vendas2026.mobile:style/AppTheme = 0x7f020000
+com.vendas2026.mobile:drawable/produto_tapete = 0x7f010006
+com.vendas2026.mobile:drawable/produto_padrao = 0x7f010005
+com.vendas2026.mobile:drawable/produto_mordedor = 0x7f010004
+com.vendas2026.mobile:drawable/produto_carrinho = 0x7f010002
+com.vendas2026.mobile:drawable/produto_bebe = 0x7f010000
+com.vendas2026.mobile:drawable/produto_educativo = 0x7f010003
+com.vendas2026.mobile:drawable/produto_boneca = 0x7f010001

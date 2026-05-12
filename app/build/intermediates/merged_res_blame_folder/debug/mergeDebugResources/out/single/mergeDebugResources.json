@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_mordedor.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_mordedor.png"
+    },
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_tapete.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_tapete.png"
+    },
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_padrao.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_padrao.png"
+    },
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_educativo.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_educativo.png"
+    },
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_boneca.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_boneca.png"
+    },
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_bebe.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_bebe.png"
+    },
+    {
+        "merged": "com.vendas2026.mobile.app-debug-4:/drawable_produto_carrinho.png.flat",
+        "source": "com.vendas2026.mobile.app-main-6:/drawable/produto_carrinho.png"
+    }
+]

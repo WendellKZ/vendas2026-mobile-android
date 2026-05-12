@@ -1,0 +1,4 @@
+com.vendas2026.mobile.test.app-androidTest-0 C:\vendas2026_app\app\build\generated\res\resValues\androidTest\debug
+com.vendas2026.mobile.test.app-mergeDebugAndroidTestResources-1 C:\vendas2026_app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.vendas2026.mobile.test.app-mergeDebugAndroidTestResources-2 C:\vendas2026_app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.vendas2026.mobile.test.app-debugAndroidTest-3 C:\vendas2026_app\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

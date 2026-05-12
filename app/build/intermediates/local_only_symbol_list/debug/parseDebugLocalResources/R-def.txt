@@ -1,0 +1,10 @@
+R_DEF: Internal format may change without notice
+local
+drawable produto_bebe
+drawable produto_boneca
+drawable produto_carrinho
+drawable produto_educativo
+drawable produto_mordedor
+drawable produto_padrao
+drawable produto_tapete
+style AppTheme

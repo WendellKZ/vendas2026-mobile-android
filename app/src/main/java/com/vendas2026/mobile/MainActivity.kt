@@ -1,0 +1,1609 @@
+package com.vendas2026.mobile
+
+import android.app.Activity
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.os.Bundle
+import android.view.Window
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
+import android.view.Gravity
+import android.view.View
+import android.widget.*
+import com.vendas2026.mobile.data.AppConfig
+import com.vendas2026.mobile.data.MobileRepository
+import com.vendas2026.mobile.data.MockRepository
+import com.vendas2026.mobile.model.CarrinhoItem
+import com.vendas2026.mobile.model.ClienteResumo
+import com.vendas2026.mobile.model.CondicaoPagamentoResumo
+import com.vendas2026.mobile.model.PedidoResumo
+import com.vendas2026.mobile.model.EmpresaResumo
+import com.vendas2026.mobile.model.PedidoEnvio
+import com.vendas2026.mobile.model.PedidoEnvioItem
+import com.vendas2026.mobile.model.ProdutoResumo
+import com.vendas2026.mobile.model.UsuarioLogado
+import com.vendas2026.mobile.model.TransportadoraResumo
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.NumberFormat
+import java.util.Locale
+
+class MainActivity : Activity() {
+    private lateinit var root: LinearLayout
+    private var usuarioLogado: UsuarioLogado? = null
+    private var empresaAtiva: EmpresaResumo? = null
+    private var empresasCache: List<EmpresaResumo> = emptyList()
+    private var produtosCache: List<ProdutoResumo> = emptyList()
+    private var clientesCache: List<ClienteResumo> = emptyList()
+    private var clienteSelecionado: ClienteResumo? = null
+    private var transportadorasCache: List<TransportadoraResumo> = emptyList()
+    private var transportadoraSelecionada: TransportadoraResumo? = null
+    private var condicoesPagamentoCache: List<CondicaoPagamentoResumo> = emptyList()
+    private var condicaoPagamentoSelecionada: CondicaoPagamentoResumo? = null
+    private var observacaoPedido: String = ""
+    private val carrinho = mutableListOf<CarrinhoItem>()
+    private val pedidosCriados = mutableListOf<PedidoResumo>()
+    private val clientesCriados = mutableListOf<ClienteResumo>()
+    private val transportadorasCriadas = mutableListOf<TransportadoraResumo>()
+
+    private val azul = Color.rgb(37, 99, 235)
+    private val azulClaro = Color.rgb(45, 148, 226)
+    private val azulProfundo = Color.rgb(28, 49, 139)
+    private val azulEscuro = Color.rgb(15, 23, 42)
+    private val cinzaTexto = Color.rgb(71, 85, 105)
+    private val fundo = Color.rgb(246, 248, 252)
+    private val verde = Color.rgb(22, 163, 74)
+    private val vermelho = Color.rgb(220, 38, 38)
+    private val amarelo = Color.rgb(245, 158, 11)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.statusBarColor = fundo
+        window.navigationBarColor = fundo
+        showLogin()
+    }
+
+    private fun setScreen(content: LinearLayout) {
+        val scroll = ScrollView(this)
+        scroll.setBackgroundColor(fundo)
+        scroll.addView(content)
+        setContentView(scroll)
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private fun baseRoot(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setBackgroundColor(fundo)
+        // Safe area reforçada: desce o conteúdo para não encostar na hora, bateria, Wi-Fi ou câmera do aparelho.
+        setPadding(dp(20), dp(58), dp(20), dp(30))
+    }
+
+    private fun title(text: String): TextView = TextView(this).apply {
+        this.text = text
+        textSize = 25f
+        setTextColor(azulEscuro)
+        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        setPadding(0, 10, 0, 8)
+    }
+
+    private fun subtitle(text: String): TextView = TextView(this).apply {
+        this.text = text
+        textSize = 14f
+        setTextColor(cinzaTexto)
+        setPadding(0, 0, 0, 18)
+    }
+
+    private fun sectionLabel(text: String): TextView = TextView(this).apply {
+        this.text = text.uppercase()
+        textSize = 12f
+        typeface = Typeface.DEFAULT_BOLD
+        setTextColor(azul)
+        setPadding(0, 18, 0, 8)
+    }
+
+    private fun pedidoHeader(etapa: Int, titulo: String, descricao: String): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(26, 22, 26, 22)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        box.addView(TextView(this).apply {
+            text = "Pedido"
+            textSize = 24f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+        })
+        box.addView(TextView(this).apply {
+            text = titulo
+            textSize = 16f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            setTextColor(azul)
+            setPadding(0, 6, 0, 6)
+        })
+        box.addView(progressEtapas(etapa))
+        return box
+    }
+
+    private fun progressEtapas(etapaAtual: Int): View {
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val etapas = listOf("Cliente", "Transp.", "Pagto", "Itens", "Fechar")
+        etapas.forEachIndexed { index, label ->
+            val active = index + 1 <= etapaAtual
+            row.addView(TextView(this).apply {
+                text = "${index + 1}. $label"
+                textSize = 12f
+                gravity = Gravity.CENTER
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(if (active) Color.WHITE else cinzaTexto)
+                setBackgroundColor(if (active) azul else Color.rgb(226, 232, 240))
+                setPadding(8, 10, 8, 10)
+            }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(3, 0, 3, 0) })
+        }
+        return row
+    }
+
+    private fun resumoPedidoCard(acaoCarrinho: Boolean = true): View {
+        val cliente = clienteSelecionado?.nome ?: "Selecione um cliente"
+        val transp = transportadoraSelecionada?.nome ?: "Selecione a transportadora"
+        val itens = carrinho.sumOf { it.quantidade }
+        val total = formatCurrency(totalCarrinho())
+        val desc = "Cliente: $cliente\nTransportadora: $transp\nItens: $itens • Total: $total"
+        return if (acaoCarrinho) card("Resumo do pedido", desc, "Abrir carrinho") { showCarrinho() } else card("Resumo do pedido", desc, "Continuar") { }
+    }
+
+    private fun button(text: String, onClick: () -> Unit): Button = Button(this).apply {
+        this.text = text.uppercase()
+        textSize = 12.5f
+        setTextColor(Color.WHITE)
+        background = gradientBg(azulProfundo, azul, 34f)
+        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        minHeight = 56
+        setPadding(20, 10, 20, 10)
+        setOnClickListener { onClick() }
+    }
+
+    private fun secondaryButton(text: String, onClick: () -> Unit): Button = Button(this).apply {
+        this.text = text.uppercase()
+        textSize = 12f
+        setTextColor(azulEscuro)
+        background = roundedBg(Color.rgb(226, 232, 240), 32f)
+        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        minHeight = 52
+        setPadding(18, 8, 18, 8)
+        setOnClickListener { onClick() }
+    }
+
+
+    private fun successButton(text: String, onClick: () -> Unit): Button = Button(this).apply {
+        this.text = text.uppercase()
+        textSize = 12.5f
+        setTextColor(Color.WHITE)
+        background = gradientBg(Color.rgb(22, 101, 52), Color.rgb(34, 197, 94), 34f)
+        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        minHeight = 54
+        setPadding(18, 8, 18, 8)
+        setOnClickListener { onClick() }
+    }
+
+    private fun budgetButton(text: String, onClick: () -> Unit): Button = Button(this).apply {
+        this.text = text.uppercase()
+        textSize = 12.5f
+        setTextColor(Color.WHITE)
+        background = gradientBg(Color.rgb(217, 119, 6), Color.rgb(245, 158, 11), 34f)
+        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        minHeight = 54
+        setPadding(18, 8, 18, 8)
+        setOnClickListener { onClick() }
+    }
+
+    private fun topBackBar(titulo: String = "", onBack: () -> Unit): View {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, 16)
+        }
+        row.addView(TextView(this).apply {
+            text = "‹"
+            textSize = 42f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(azulEscuro)
+            setPadding(4, 0, 18, 0)
+            setOnClickListener { onBack() }
+        }, LinearLayout.LayoutParams(-2, dp(52)))
+        row.addView(TextView(this).apply {
+            text = titulo
+            textSize = 19f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            setTextColor(azulEscuro)
+            gravity = Gravity.CENTER_VERTICAL
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        return row
+    }
+
+
+    private fun infoBox(texto: String): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        background = roundedBg(Color.rgb(239, 246, 255), 26f, Color.rgb(191, 219, 254))
+        setPadding(22, 18, 22, 18)
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 8, 0, 18) }
+        addView(TextView(context).apply {
+            text = texto
+            textSize = 14f
+            setTextColor(azulEscuro)
+            setLineSpacing(4f, 1.0f)
+        })
+    }
+
+    private fun formSection(titulo: String, icone: String, vararg campos: View): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            setPadding(22, 18, 22, 18)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        box.addView(TextView(this).apply {
+            text = "$icone  $titulo"
+            textSize = 18f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            setPadding(0, 0, 0, 12)
+        })
+        campos.forEach { box.addView(it) }
+        return box
+    }
+
+    private fun premiumInput(label: String, hintText: String, inputTypeValue: Int = InputType.TYPE_CLASS_TEXT, enabled: Boolean = true, minLinesValue: Int = 1): EditText {
+        return EditText(this).apply {
+            hint = hintText
+            textSize = 15f
+            inputType = inputTypeValue
+            isEnabled = enabled
+            if (minLinesValue <= 1) setSingleLine(true) else { setSingleLine(false); minLines = minLinesValue }
+            setPadding(18, 12, 18, 12)
+            background = roundedBg(Color.rgb(248, 250, 252), 22f, Color.rgb(203, 213, 225))
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 14) }
+        }
+    }
+
+    private fun labeledField(label: String, field: EditText): View {
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        box.addView(TextView(this).apply {
+            text = label
+            textSize = 12f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            setPadding(2, 0, 0, 6)
+        })
+        box.addView(field)
+        return box
+    }
+
+    private fun twoColumns(left: View, right: View): View = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        addView(left, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, 8, 0) })
+        addView(right, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8, 0, 0, 0) })
+    }
+
+
+    private fun premiumSearchBox(hintText: String, onBuscar: (String) -> Unit, onLimpar: () -> Unit): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            setPadding(22, 18, 22, 18)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        box.addView(TextView(this).apply {
+            text = "🔎  Busca rápida"
+            textSize = 18f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            setPadding(0, 0, 0, 12)
+        })
+        val busca = premiumInput("Busca", hintText)
+        box.addView(busca)
+        val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowBusca.addView(button("Buscar") { onBuscar(busca.text.toString().trim()) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowBusca.addView(secondaryButton("Limpar") { onLimpar() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        box.addView(rowBusca)
+        return box
+    }
+
+    private fun statusBadge(texto: String, cor: Int): TextView = TextView(this).apply {
+        text = texto.uppercase()
+        textSize = 12f
+        typeface = Typeface.DEFAULT_BOLD
+        setTextColor(Color.WHITE)
+        gravity = Gravity.CENTER
+        background = roundedBg(cor, 20f)
+        setPadding(14, 8, 14, 8)
+    }
+
+    private fun miniInfo(label: String, valor: String, destaque: Boolean = false): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        background = roundedBg(Color.rgb(248, 250, 252), 22f, Color.rgb(226, 232, 240))
+        setPadding(16, 12, 16, 12)
+        addView(TextView(context).apply { text = label.uppercase(); textSize = 10f; typeface = Typeface.DEFAULT_BOLD; setTextColor(cinzaTexto) })
+        addView(TextView(context).apply { text = valor; textSize = if (destaque) 18f else 14f; typeface = Typeface.DEFAULT_BOLD; setTextColor(if (destaque) azul else azulEscuro) })
+    }
+
+    private fun showLogin() {
+        root = baseRoot()
+        root.gravity = Gravity.CENTER_HORIZONTAL
+        setScreen(root)
+
+        val hero = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = gradientBg(azulProfundo, azul, 44f)
+            setPadding(28, 28, 28, 28)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 22) }
+        }
+        hero.addView(TextView(this).apply {
+            text = "VENDAS 2026"
+            textSize = 11f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
+            background = roundedBg(Color.argb(70, 255, 255, 255), 24f, Color.argb(90, 255, 255, 255))
+            setPadding(18, 8, 18, 8)
+        })
+        hero.addView(TextView(this).apply {
+            text = "Vendas 2026"
+            textSize = 31f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setPadding(0, 18, 0, 8)
+        })
+        root.addView(hero)
+
+        val cardLogin = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 36f, Color.rgb(226, 232, 240))
+            setPadding(24, 22, 24, 24)
+        }
+        cardLogin.addView(TextView(this).apply {
+            text = "Entrar"
+            textSize = 22f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            setPadding(0, 0, 0, 4)
+        })
+        val usuario = premiumInput("Usuário", "Usuário / e-mail")
+        val senha = premiumInput("Senha", "Senha", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
+        cardLogin.addView(labeledField("Usuário / e-mail", usuario))
+        cardLogin.addView(labeledField("Senha", senha))
+        cardLogin.addView(button("Entrar") {
+            if (usuario.text.isBlank() || senha.text.isBlank()) Toast.makeText(this, "Informe usuário e senha", Toast.LENGTH_SHORT).show()
+            else doLogin(usuario.text.toString(), senha.text.toString())
+        })
+        root.addView(cardLogin)
+    }
+
+    private fun doLogin(usuario: String, senha: String) {
+        showLoading("Entrando no app...")
+        Thread {
+            val result = MobileRepository.login(usuario, senha)
+            runOnUiThread {
+                if (result.ok && result.data != null) { usuarioLogado = result.data; loadEmpresas() }
+                else { Toast.makeText(this, result.message.ifBlank { "Falha no login" }, Toast.LENGTH_LONG).show(); showLogin() }
+            }
+        }.start()
+    }
+
+    private fun showLoading(msg: String) {
+        root = baseRoot()
+        root.gravity = Gravity.CENTER
+        setScreen(root)
+        root.addView(ProgressBar(this))
+        root.addView(TextView(this).apply { text = msg; textSize = 16f; setTextColor(cinzaTexto); gravity = Gravity.CENTER; setPadding(0,16,0,0) })
+    }
+
+    private fun empresaIdAtiva(): String = empresaAtiva?.codigo ?: "1"
+
+    private fun loadEmpresas() {
+        showLoading("Carregando...")
+        Thread {
+            val result = MobileRepository.empresas(usuarioLogado?.token ?: "")
+            runOnUiThread {
+                if (result.ok && result.data != null) {
+                    empresasCache = result.data
+                    if (empresasCache.size == 1) { empresaAtiva = empresasCache.first(); showHome() }
+                    else showSelecionarEmpresa(empresasCache)
+                } else {
+                    Toast.makeText(this, result.message.ifBlank { "Falha ao carregar empresas" }, Toast.LENGTH_LONG).show()
+                    showLogin()
+                }
+            }
+        }.start()
+    }
+
+    private fun showSelecionarEmpresa(empresas: List<EmpresaResumo>) {
+        root = baseRoot()
+        setScreen(root)
+        root.addView(TextView(this).apply {
+            text = "Escolha a empresa"
+            textSize = 28f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            setTextColor(azulEscuro)
+            setPadding(0, 0, 0, 8)
+        })
+        root.addView(subtitle("Selecione a empresa"))
+        empresas.forEach { emp ->
+            val desc = listOf(emp.documento, emp.cidade, emp.destaque).filter { it.isNotBlank() }.joinToString(" • ")
+            root.addView(card("🏢 ${emp.nome}", desc.ifBlank { "Selecionar" }, "Entrar") {
+                empresaAtiva = emp
+                produtosCache = emptyList()
+                clientesCache = emptyList()
+                carrinho.clear()
+                showHome()
+            })
+        }
+        root.addView(secondaryButton("Voltar ao login") { usuarioLogado = null; empresaAtiva = null; showLogin() }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 18, 0, 0) })
+    }
+
+
+    private fun homeHero(nome: String): View {
+        val hero = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = gradientBg(azulProfundo, azulClaro, 42f)
+            setPadding(26, 24, 26, 24)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        hero.addView(TextView(this).apply {
+            text = "VENDAS 2026"
+            textSize = 11f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
+            background = roundedBg(Color.argb(65, 255, 255, 255), 24f, Color.argb(85, 255, 255, 255))
+            setPadding(14, 8, 14, 8)
+        })
+        hero.addView(TextView(this).apply {
+            text = "Olá, $nome"
+            textSize = 28f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setPadding(0, 16, 0, 6)
+        })
+        hero.addView(TextView(this).apply {
+            text = "${empresaAtiva?.nome ?: "Empresa"}"
+            textSize = 14f
+            setTextColor(Color.rgb(219, 234, 254))
+            setLineSpacing(4f, 1.0f)
+        })
+        val actionRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 18, 0, 0)
+        }
+        actionRow.addView(TextView(this).apply {
+            text = "Novo pedido"
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.WHITE, 28f)
+            setPadding(18, 12, 18, 12)
+            setOnClickListener { iniciarNovoPedido() }
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        actionRow.addView(TextView(this).apply {
+            text = "Pedidos"
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.WHITE, 28f)
+            setPadding(18, 12, 18, 12)
+            setOnClickListener { loadPedidos() }
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        hero.addView(actionRow)
+        return hero
+    }
+
+    private fun showHome() {
+        root = baseRoot()
+        setScreen(root)
+        val nome = usuarioLogado?.nome ?: "Vendedor"
+        root.addView(homeHero(nome))
+        root.addView(companyContextCard())
+        root.addView(kpiRow())
+
+        val menu1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        menu1.addView(menuIconCard("🛒", "Novo pedido", "", true) { iniciarNovoPedido() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, 10, 16) })
+        menu1.addView(menuIconCard("📋", "Pedidos", "", false) { loadPedidos() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(10, 0, 0, 16) })
+        root.addView(menu1)
+
+        val menu2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        menu2.addView(menuIconCard("📦", "Produtos", "", false) { loadProdutos() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, 10, 16) })
+        menu2.addView(menuIconCard("👥", "Clientes", "", false) { loadClientesConsulta() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(10, 0, 0, 16) })
+        root.addView(menu2)
+
+        val menu3 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        menu3.addView(menuIconCard("➕", "Novo cliente", "", false) { showNovoCliente() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, 10, 16) })
+        menu3.addView(menuIconCard("🚚", "Transportadora", "", false) { showCadastrarTransportadora() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(10, 0, 0, 16) })
+        root.addView(menu3)
+
+        val menu4 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        menu4.addView(menuIconCard("🔔", "Notificações", "", false) { showNotificacoes() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, 10, 16) })
+        menu4.addView(menuIconCard("📍", "Rota", "", false) { showRotaVisitas() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(10, 0, 0, 16) })
+        root.addView(menu4)
+
+        val menu5 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        menu5.addView(menuIconCard("🕘", "Histórico", "", false) { showHistoricoPedidos() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0, 0, 10, 16) })
+        menu5.addView(menuIconCard("🏷️", "Campanhas", "", false) { showCampanhas() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(10, 0, 0, 16) })
+        root.addView(menu5)
+
+        val menu6 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        menu6.addView(menuIconCard("🏢", "Empresa", "", false) { showSelecionarEmpresa(empresasCache.ifEmpty { MockRepository.empresas }) }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) })
+        root.addView(menu6)
+
+        root.addView(secondaryButton("Sair") { usuarioLogado = null; empresaAtiva = null; showLogin() }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 6, 0, 32) })
+    }
+
+    private fun companyContextCard(): View {
+        val emp = empresaAtiva
+        val texto = if (emp != null) "${emp.nome} • ${emp.cidade.ifBlank { "empresa selecionada" }}" else "Nenhuma empresa selecionada"
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = roundedBg(Color.rgb(239, 246, 255), 26f, Color.rgb(191, 219, 254))
+            setPadding(18, 14, 18, 14)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 14) }
+            addView(TextView(context).apply { text = "🏢"; textSize = 22f; setPadding(0,0,12,0) })
+            addView(TextView(context).apply {
+                text = texto
+                textSize = 12.5f
+                typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                setTextColor(azulEscuro)
+            }, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(TextView(context).apply {
+                text = "Trocar"
+                textSize = 12f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(azul)
+                setOnClickListener { showSelecionarEmpresa(empresasCache.ifEmpty { MockRepository.empresas }) }
+            })
+        }
+    }
+
+    private fun roundedBg(color: Int, radius: Float = 28f, strokeColor: Int? = null): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = radius
+            strokeColor?.let { setStroke(2, it) }
+        }
+    }
+
+    private fun gradientBg(startColor: Int, endColor: Int, radius: Float = 36f): GradientDrawable {
+        return GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(startColor, endColor)).apply {
+            cornerRadius = radius
+        }
+    }
+
+    private fun menuIconCard(icone: String, titulo: String, apoio: String, destaque: Boolean, onClick: () -> Unit): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = if (destaque) gradientBg(azulProfundo, azul, 36f) else roundedBg(Color.WHITE, 36f, Color.rgb(226, 232, 240))
+            setPadding(16, 24, 16, 22)
+            minimumHeight = 178
+            setOnClickListener { onClick() }
+        }
+        box.addView(TextView(this).apply {
+            text = icone
+            textSize = 31f
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 14)
+        })
+        box.addView(TextView(this).apply {
+            text = titulo
+            textSize = if (titulo.length > 12) 14.5f else 16f
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setSingleLine(true)
+            includeFontPadding = false
+            setTextColor(if (destaque) Color.WHITE else azulEscuro)
+        })
+        if (apoio.isNotBlank()) box.addView(TextView(this).apply {
+            text = apoio
+            textSize = 13f
+            gravity = Gravity.CENTER
+            setTextColor(if (destaque) Color.rgb(219, 234, 254) else cinzaTexto)
+            setPadding(0, 4, 0, 0)
+        })
+        return box
+    }
+
+    private fun kpiRow(): View {
+        val box = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 0, 0, 18) }
+        box.addView(kpi("${4 + pedidosCriados.size}", "Pedidos"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        box.addView(kpi("${carrinho.sumOf { it.quantidade }}", "Itens carrinho"), LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        return box
+    }
+
+    private fun kpi(valor: String, label: String): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        background = roundedBg(Color.WHITE, 26f, Color.rgb(226, 232, 240))
+        setPadding(20, 18, 20, 18)
+        addView(TextView(context).apply { text = valor; textSize = 28f; typeface = Typeface.DEFAULT_BOLD; setTextColor(azul) })
+        addView(TextView(context).apply { text = label; textSize = 13f; setTextColor(cinzaTexto) })
+    }
+
+    private fun card(titulo: String, desc: String, btn: String, onClick: () -> Unit): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            setPadding(28, 24, 28, 24)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 20) }
+        }
+        box.addView(TextView(this).apply { text = titulo; textSize = 20f; typeface = Typeface.DEFAULT_BOLD; setTextColor(azulEscuro); setPadding(0, 0, 0, if (desc.isBlank()) 12 else 0) })
+        if (desc.isNotBlank()) box.addView(TextView(this).apply { text = desc; textSize = 14f; setTextColor(cinzaTexto); setPadding(0, 6, 0, 12) })
+        box.addView(button(btn, onClick))
+        return box
+    }
+
+
+
+    private fun featureCard(icone: String, titulo: String, desc: String, btn: String, onClick: () -> Unit): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            setPadding(24, 20, 24, 20)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) }
+        }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        row.addView(TextView(this).apply {
+            text = icone
+            textSize = 28f
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.rgb(239, 246, 255), 24f, Color.rgb(191, 219, 254))
+            setPadding(14, 10, 14, 10)
+        })
+        row.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 0, 0, 0)
+            addView(TextView(context).apply { text = titulo; textSize = 17f; typeface = Typeface.create("sans-serif-medium", Typeface.BOLD); setTextColor(azulEscuro) })
+            addView(TextView(context).apply { text = desc; textSize = 13f; setTextColor(cinzaTexto); setPadding(0, 4, 0, 0) })
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        box.addView(row)
+        box.addView(secondaryButton(btn) { onClick() }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 14, 0, 0) })
+        return box
+    }
+
+    private fun showNotificacoes() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Notificações") { showHome() })
+        root.addView(title("Notificações"))
+        root.addView(featureCard("✅", "Pedido aprovado", "O pedido 000129 foi aprovado e está liberado para sequência.", "Ver pedidos") { loadPedidos() })
+        root.addView(featureCard("📦", "Produto em destaque", "Carrinho Infantil Premium com boa disponibilidade para venda.", "Ver produtos") { loadProdutos() })
+        root.addView(featureCard("🏷️", "Campanha ativa", "Condição especial para mix de brinquedos nesta empresa.", "Ver campanhas") { showCampanhas() })
+        root.addView(secondaryButton("Voltar") { showHome() })
+    }
+
+    private fun showRotaVisitas() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Rota") { showHome() })
+        root.addView(title("Rota de visitas"))
+        root.addView(featureCard("📍", "Mercado Nova Era", "Santo André/SP • Próxima visita sugerida", "Registrar check-in") { Toast.makeText(this, "Check-in registrado no app", Toast.LENGTH_LONG).show() })
+        root.addView(featureCard("📍", "Distribuidora Alfa", "São Bernardo/SP • Cliente com pedido recente", "Abrir cliente") { loadClientesConsulta() })
+        root.addView(featureCard("📍", "Atacado Kids Brasil", "Guarulhos/SP • Revisar oportunidades", "Novo pedido") { iniciarNovoPedido() })
+        root.addView(secondaryButton("Voltar") { showHome() })
+    }
+
+    private fun showLeitorCodigo() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Leitor") { showHome() })
+        root.addView(title("Leitor de código"))
+        root.addView(subtitle("Informe ou cole o código de barras/SKU para localizar o produto."))
+        val codigo = premiumInput("Código", "Digite ou escaneie o código")
+        root.addView(formSection("Buscar produto", "▦", labeledField("Código / SKU", codigo)))
+        root.addView(button("Consultar produto") {
+            val q = codigo.text.toString().trim()
+            if (q.isBlank()) Toast.makeText(this, "Informe o código", Toast.LENGTH_SHORT).show()
+            else {
+                val lista = if (produtosCache.isNotEmpty()) produtosCache else MockRepository.produtos(empresaIdAtiva())
+                val encontrados = lista.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) }
+                if (encontrados.isEmpty()) Toast.makeText(this, "Produto não encontrado", Toast.LENGTH_LONG).show() else showProdutos(encontrados)
+            }
+        })
+        root.addView(secondaryButton("Voltar") { showHome() })
+    }
+
+    private fun showHistoricoPedidos() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Histórico") { showHome() })
+        root.addView(title("Histórico de pedidos"))
+        val pedidos = pedidosCriados + MockRepository.pedidos(empresaIdAtiva())
+        pedidos.forEach { p -> root.addView(card("Pedido ${p.numero}", "${p.cliente} • ${p.status} • ${p.total}", "Consultar") { Toast.makeText(this, "Consulta do pedido ${p.numero}", Toast.LENGTH_SHORT).show() }) }
+        root.addView(secondaryButton("Voltar") { showHome() })
+    }
+
+    private fun showCampanhas() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Campanhas") { showHome() })
+        root.addView(title("Campanhas"))
+        root.addView(featureCard("🏷️", "Mix brinquedos", "Condição comercial para pedidos com 5 ou mais itens.", "Criar pedido") { iniciarNovoPedido() })
+        root.addView(featureCard("%", "Desconto controlado", "O desconto continua respeitando a regra comercial do ERP.", "Novo pedido") { iniciarNovoPedido() })
+        root.addView(secondaryButton("Voltar") { showHome() })
+    }
+
+    private fun loadClientesConsulta() {
+        showLoading("Carregando clientes...")
+        Thread {
+            val result = MobileRepository.clientes(usuarioLogado?.token ?: "")
+            runOnUiThread {
+                if (result.ok && result.data != null) {
+                    clientesCache = clientesCriados + result.data
+                    showClientesConsulta(clientesCache)
+                } else showError(result.message, ::showHome)
+            }
+        }.start()
+    }
+
+    private fun showClientesConsulta(clientes: List<ClienteResumo>) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Clientes") { showHome() })
+        root.addView(title("Clientes"))
+        root.addView(subtitle("Consulta e edição em layout premium, seguindo o mesmo padrão visual dos cadastros."))
+        root.addView(premiumSearchBox("Buscar por código, nome ou cidade", { q ->
+            val filtrados = if (q.isBlank()) clientesCache else clientesCache.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) || it.cidade.contains(q, true) }
+            showClientesConsulta(filtrados)
+        }, { showClientesConsulta(clientesCache) }))
+        root.addView(sectionLabel("Consulta e edição"))
+        if (clientes.isEmpty()) root.addView(card("Nenhum cliente encontrado", "Tente buscar por outro código, nome ou cidade.", "Voltar") { showHome() })
+        clientes.forEach { c -> root.addView(clienteConsultaCard(c)) }
+        root.addView(secondaryButton("Voltar ao menu") { showHome() })
+    }
+
+    private fun clienteConsultaCard(c: ClienteResumo): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            setPadding(22, 18, 22, 18)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        val topo = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        topo.addView(TextView(this).apply {
+            text = "👤"
+            textSize = 28f
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.rgb(239, 246, 255), 24f, Color.rgb(191, 219, 254))
+            setPadding(16, 10, 16, 10)
+        })
+        topo.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 0, 0, 0)
+            addView(TextView(context).apply { text = c.nome; textSize = 18f; typeface = Typeface.DEFAULT_BOLD; setTextColor(azulEscuro) })
+            addView(TextView(context).apply { text = "Código ${c.codigo}"; textSize = 13f; setTextColor(cinzaTexto) })
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        box.addView(topo)
+        box.addView(twoColumns(
+            miniInfo("Cidade/UF", c.cidade),
+            miniInfo("Status", "Ativo")
+        ))
+        box.addView(button("Consultar / editar") { showEditarCliente(c) })
+        return box
+    }
+
+    private fun showEditarCliente(c: ClienteResumo) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Editar cliente") { showClientesConsulta(clientesCache) })
+        root.addView(title("Editar cliente"))
+        root.addView(subtitle("Edição local/segura com o mesmo layout premium do cadastro."))
+        root.addView(infoBox("Nesta etapa a edição fica salva no app. Depois conectamos o botão Salvar na API real para atualizar o ERP Web."))
+        val codigo = premiumInput("Código", "Código", enabled = false).apply { setText(c.codigo) }
+        val nome = premiumInput("Nome do cliente", "Nome fantasia / razão social").apply { setText(c.nome) }
+        val cidade = premiumInput("Cidade/UF", "Cidade / UF").apply { setText(c.cidade) }
+        val email = premiumInput("E-mail de cobrança", "financeiro@cliente.com", InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+        val telefone = premiumInput("Telefone", "(00) 00000-0000")
+        val status = premiumInput("Status", "Ativo").apply { setText("Ativo") }
+        root.addView(formSection("Identificação", "👤",
+            twoColumns(labeledField("Código", codigo), labeledField("Status", status)),
+            labeledField("Nome do cliente", nome)
+        ))
+        root.addView(formSection("Contato e região", "📍",
+            twoColumns(labeledField("Cidade/UF", cidade), labeledField("Telefone", telefone)),
+            labeledField("E-mail de cobrança", email)
+        ))
+        root.addView(button("Salvar edição") {
+            val atualizado = ClienteResumo(c.codigo, nome.text.toString().ifBlank { c.nome }, cidade.text.toString().ifBlank { c.cidade })
+            clientesCriados.removeAll { it.codigo == c.codigo }
+            clientesCriados.add(0, atualizado)
+            clientesCache = clientesCache.map { if (it.codigo == c.codigo) atualizado else it }
+            Toast.makeText(this, "Cliente atualizado no app", Toast.LENGTH_LONG).show()
+            showClientesConsulta(clientesCache)
+        })
+        root.addView(secondaryButton("Voltar para clientes") { showClientesConsulta(clientesCache) })
+    }
+
+    private fun showNovoCliente() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Novo cliente") { showHome() })
+        root.addView(title("Novo cliente"))
+
+        val codigo = premiumInput("Código", "C${900 + clientesCriados.size + 1}").apply { setText("C${900 + clientesCriados.size + 1}") }
+        val cnpj = premiumInput("CNPJ", "00.000.000/0000-00", InputType.TYPE_CLASS_NUMBER)
+        val fantasia = premiumInput("Nome fantasia", "Nome comercial do cliente")
+        val nome = premiumInput("Razão social", "Razão social do CNPJ")
+        val endereco = premiumInput("Endereço", "Endereço completo", InputType.TYPE_CLASS_TEXT, true, 2)
+        val cidade = premiumInput("Cidade/UF", "Cidade / UF")
+        val ie = premiumInput("Inscrição estadual", "Preenchimento automático por CNPJ")
+        val suframa = premiumInput("SUFRAMA", "SUFRAMA, se houver")
+        val emailGeral = premiumInput("E-mail geral", "email@cliente.com", InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+        val telefone = premiumInput("Telefone", "(00) 00000-0000")
+        val emailCobranca = premiumInput("E-mail de cobrança", "financeiro@cliente.com", InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+        val status = premiumInput("Status", "Ativo").apply { setText("Ativo") }
+
+        root.addView(formSection("Consulta do CNPJ", "🔎",
+            twoColumns(labeledField("Código", codigo), labeledField("CNPJ", cnpj)),
+            button("Buscar dados pelo CNPJ") {
+                buscarCnpj(cnpj.text.toString(), "cliente") { dados ->
+                    preencherSeVazio(nome, dados["razao"])
+                    preencherSeVazio(fantasia, dados["fantasia"])
+                    preencherSeVazio(endereco, dados["endereco"])
+                    preencherSeVazio(cidade, dados["cidadeUf"])
+                    preencherSeVazio(ie, dados["ie"])
+                    preencherSeVazio(suframa, dados["suframa"])
+                    preencherSeVazio(telefone, dados["telefone"])
+                }
+            }
+        ))
+
+        root.addView(formSection("Dados comerciais", "🏢",
+            twoColumns(labeledField("Nome fantasia / Nome comercial", fantasia), labeledField("Razão social", nome)),
+            twoColumns(labeledField("E-mail geral", emailGeral), labeledField("Telefone", telefone))
+        ))
+
+        root.addView(formSection("Endereço e fiscal", "📍",
+            labeledField("Endereço completo", endereco),
+            twoColumns(labeledField("Cidade/UF", cidade), labeledField("Inscrição Estadual", ie)),
+            labeledField("SUFRAMA, se houver", suframa)
+        ))
+
+        root.addView(formSection("Financeiro", "💰",
+            twoColumns(labeledField("E-mail de cobrança", emailCobranca), labeledField("Status", status))
+        ))
+
+        root.addView(button("Salvar cliente") {
+            if (cnpj.text.isBlank() || nome.text.isBlank() || cidade.text.isBlank() || emailCobranca.text.isBlank()) {
+                Toast.makeText(this, "Preencha os campos obrigatórios", Toast.LENGTH_SHORT).show()
+                return@button
+            }
+            val novo = ClienteResumo(codigo.text.toString().ifBlank { "C${900 + clientesCriados.size + 1}" }, nome.text.toString(), cidade.text.toString())
+            clientesCriados.add(0, novo)
+            clientesCache = clientesCriados + clientesCache.filter { it.codigo != novo.codigo }
+            Toast.makeText(this, "Cliente cadastrado", Toast.LENGTH_LONG).show()
+            showClientesConsulta(clientesCache)
+        })
+        root.addView(secondaryButton("Voltar ao menu") { showHome() })
+    }
+
+    private fun showCadastrarTransportadora() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Transportadora") { showHome() })
+        root.addView(title("Cadastrar transportadora"))
+
+        val codigo = premiumInput("Código", "T${900 + transportadorasCriadas.size + 1}").apply { setText("T${900 + transportadorasCriadas.size + 1}") }
+        val cnpj = premiumInput("CNPJ", "00.000.000/0000-00", InputType.TYPE_CLASS_NUMBER)
+        val nome = premiumInput("Nome da transportadora", "Transportadora / Razão social")
+        val endereco = premiumInput("Endereço", "Endereço completo", InputType.TYPE_CLASS_TEXT, true, 2)
+        val telefone = premiumInput("Telefone", "Telefone de contato")
+        val regiao = premiumInput("Região", "Região de atendimento")
+
+        root.addView(formSection("Consulta da transportadora", "🚚",
+            twoColumns(labeledField("Código", codigo), labeledField("CNPJ", cnpj)),
+            button("Buscar transportadora pelo CNPJ") {
+                buscarCnpj(cnpj.text.toString(), "transportadora") { dados ->
+                    preencherSeVazio(nome, dados["razao"] ?: dados["fantasia"])
+                    preencherSeVazio(endereco, dados["endereco"])
+                    preencherSeVazio(telefone, dados["telefone"])
+                    preencherSeVazio(regiao, dados["cidadeUf"])
+                }
+            }
+        ))
+
+        root.addView(formSection("Dados da transportadora", "📦",
+            labeledField("Nome / Razão social", nome),
+            labeledField("Endereço completo", endereco),
+            twoColumns(labeledField("Telefone de contato", telefone), labeledField("Região", regiao))
+        ))
+
+        root.addView(button("Salvar transportadora") {
+            if (cnpj.text.isBlank() || nome.text.isBlank() || endereco.text.isBlank()) {
+                Toast.makeText(this, "Preencha os campos obrigatórios", Toast.LENGTH_SHORT).show()
+                return@button
+            }
+            val nova = TransportadoraResumo(
+                codigo.text.toString().ifBlank { "T${900 + transportadorasCriadas.size + 1}" },
+                nome.text.toString(),
+                regiao.text.toString().ifBlank { "Região não informada" },
+                telefone.text.toString().ifBlank { "Telefone não informado" }
+            )
+            transportadorasCriadas.add(0, nova)
+            transportadorasCache = transportadorasCriadas + transportadorasCache.filter { it.codigo != nova.codigo }
+            Toast.makeText(this, "Transportadora cadastrada no app", Toast.LENGTH_LONG).show()
+            showHome()
+        })
+        root.addView(secondaryButton("Voltar ao menu") { showHome() })
+    }
+
+    private fun somenteNumeros(valor: String): String = valor.filter { it.isDigit() }
+
+    private fun preencherSeVazio(campo: EditText, valor: String?) {
+        if (!valor.isNullOrBlank() && campo.text.isBlank()) campo.setText(valor)
+    }
+
+    private fun buscarCnpj(cnpjInformado: String, tipo: String, aoEncontrar: (Map<String, String>) -> Unit) {
+        val cnpj = somenteNumeros(cnpjInformado)
+        if (cnpj.length != 14) {
+            Toast.makeText(this, "Informe um CNPJ válido com 14 números", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Toast.makeText(this, "Consultando CNPJ...", Toast.LENGTH_SHORT).show()
+        Thread {
+            val dados = consultarCnpjWs(cnpj).ifEmpty { consultarBrasilApi(cnpj) }
+            runOnUiThread {
+                if (dados.isEmpty()) {
+                    Toast.makeText(this, "Não consegui consultar esse CNPJ agora. Os campos continuam editáveis.", Toast.LENGTH_LONG).show()
+                } else {
+                    aoEncontrar(dados)
+                    val msg = if (tipo == "cliente") "Dados do cliente preenchidos" else "Dados da transportadora preenchidos"
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
+    private fun getJson(urlText: String): JSONObject? {
+        return try {
+            val conn = (URL(urlText).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 10000
+                readTimeout = 10000
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("User-Agent", "Vendas2026Mobile/1.0")
+            }
+            val stream = if (conn.responseCode in 200..299) conn.inputStream else conn.errorStream
+            val body = stream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            if (body.isBlank() || !body.trim().startsWith("{")) null else JSONObject(body)
+        } catch (_: Exception) { null }
+    }
+
+    private fun consultarBrasilApi(cnpj: String): Map<String, String> {
+        val json = getJson("https://brasilapi.com.br/api/cnpj/v1/$cnpj") ?: return emptyMap()
+        val logradouro = listOf(json.optString("descricao_tipo_de_logradouro"), json.optString("logradouro"), json.optString("numero"))
+            .filter { it.isNotBlank() }.joinToString(" ")
+        val complemento = json.optString("complemento")
+        val bairro = json.optString("bairro")
+        val cidade = json.optString("municipio")
+        val uf = json.optString("uf")
+        val cep = json.optString("cep")
+        val endereco = listOf(logradouro, complemento, bairro, "CEP $cep").filter { it.isNotBlank() && it != "CEP " }.joinToString(" - ")
+        return mapOf(
+            "razao" to json.optString("razao_social"),
+            "fantasia" to json.optString("nome_fantasia"),
+            "endereco" to endereco,
+            "cidadeUf" to listOf(cidade, uf).filter { it.isNotBlank() }.joinToString("/"),
+            "telefone" to json.optString("ddd_telefone_1"),
+            "ie" to "",
+            "suframa" to ""
+        ).filterValues { it.isNotBlank() }
+    }
+
+    private fun consultarCnpjWs(cnpj: String): Map<String, String> {
+        val json = getJson("https://publica.cnpj.ws/cnpj/$cnpj") ?: return emptyMap()
+        val est = json.optJSONObject("estabelecimento") ?: return emptyMap()
+        val cidadeObj = est.optJSONObject("cidade")
+        val estadoObj = est.optJSONObject("estado")
+        val logradouro = listOf(est.optString("tipo_logradouro"), est.optString("logradouro"), est.optString("numero"))
+            .filter { it.isNotBlank() }.joinToString(" ")
+        val endereco = listOf(logradouro, est.optString("complemento"), est.optString("bairro"), "CEP ${est.optString("cep")}")
+            .filter { it.isNotBlank() && it != "CEP " }.joinToString(" - ")
+        val inscricoes = est.optJSONArray("inscricoes_estaduais")
+        var ie = ""
+        if (inscricoes != null && inscricoes.length() > 0) ie = inscricoes.optJSONObject(0)?.optString("inscricao_estadual") ?: ""
+        return mapOf(
+            "razao" to json.optString("razao_social"),
+            "fantasia" to est.optString("nome_fantasia"),
+            "endereco" to endereco,
+            "cidadeUf" to listOf(cidadeObj?.optString("nome") ?: "", estadoObj?.optString("sigla") ?: "").filter { it.isNotBlank() }.joinToString("/"),
+            "telefone" to listOf(est.optString("ddd1"), est.optString("telefone1")).filter { it.isNotBlank() }.joinToString(" "),
+            "ie" to ie,
+            "suframa" to est.optString("inscricao_suframa")
+        ).filterValues { it.isNotBlank() }
+    }
+
+    private fun iniciarNovoPedido() {
+        clienteSelecionado = null
+        transportadoraSelecionada = null
+        condicaoPagamentoSelecionada = null
+        observacaoPedido = ""
+        carrinho.clear()
+        loadClientesParaPedido()
+    }
+
+    private fun loadClientesParaPedido() {
+        showLoading("Carregando clientes...")
+        Thread {
+            val result = MobileRepository.clientes(usuarioLogado?.token ?: "")
+            runOnUiThread {
+                if (result.ok && result.data != null) { clientesCache = clientesCriados + result.data; showSelecionarCliente(clientesCache) }
+                else showError(result.message, ::showHome)
+            }
+        }.start()
+    }
+
+    private fun showSelecionarCliente(clientes: List<ClienteResumo>) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Novo pedido") { showHome() })
+        root.addView(pedidoHeader(1, "1. Escolha o cliente", ""))
+        root.addView(sectionLabel("Busca rápida"))
+        val busca = EditText(this).apply { hint = "Digite código, nome ou cidade"; setSingleLine(true) }
+        root.addView(busca)
+        val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowBusca.addView(button("Buscar") {
+            val q = busca.text.toString().trim()
+            val filtrados = if (q.isBlank()) clientesCache else clientesCache.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) || it.cidade.contains(q, true) }
+            showSelecionarCliente(filtrados)
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowBusca.addView(secondaryButton("Limpar") { showSelecionarCliente(clientesCache) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        root.addView(rowBusca)
+        root.addView(sectionLabel("Clientes"))
+        clientes.forEach { c -> root.addView(clienteCard(c)) }
+        root.addView(secondaryButton("Cancelar pedido") { showHome() })
+    }
+
+    private fun clienteCard(c: ClienteResumo): View = card("${c.codigo} - ${c.nome}", c.cidade, "Selecionar cliente") {
+        clienteSelecionado = c
+        loadTransportadorasParaPedido()
+    }
+
+    private fun loadTransportadorasParaPedido() {
+        showLoading("Carregando transportadoras...")
+        Thread {
+            val result = MobileRepository.transportadoras(usuarioLogado?.token ?: "")
+            runOnUiThread {
+                if (result.ok && result.data != null) { transportadorasCache = transportadorasCriadas + result.data; showSelecionarTransportadora(transportadorasCache) }
+                else showError(result.message, ::showHome)
+            }
+        }.start()
+    }
+
+    private fun showSelecionarTransportadora(transportadoras: List<TransportadoraResumo>) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Transportadora") { showSelecionarCliente(clientesCache) })
+        root.addView(pedidoHeader(2, "2. Escolha a transportadora", ""))
+        root.addView(resumoPedidoCard(false))
+        root.addView(sectionLabel("Busca rápida"))
+        val busca = EditText(this).apply { hint = "Buscar por código, nome ou prazo"; setSingleLine(true) }
+        root.addView(busca)
+        val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowBusca.addView(button("Buscar") {
+            val q = busca.text.toString().trim()
+            val filtrados = if (q.isBlank()) transportadorasCache else transportadorasCache.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) || it.prazo.contains(q, true) }
+            showSelecionarTransportadora(filtrados)
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowBusca.addView(secondaryButton("Limpar") { showSelecionarTransportadora(transportadorasCache) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        root.addView(rowBusca)
+        root.addView(sectionLabel("Transportadoras"))
+        transportadoras.forEach { t -> root.addView(transportadoraCard(t)) }
+        root.addView(secondaryButton("Voltar para clientes") { showSelecionarCliente(clientesCache) })
+    }
+
+    private fun transportadoraCard(t: TransportadoraResumo): View = card("${t.codigo} - ${t.nome}", "Prazo: ${t.prazo} • Frete: ${t.frete}", "Selecionar transportadora") {
+        transportadoraSelecionada = t
+        carregarCondicoesPagamento()
+    }
+
+    private fun carregarCondicoesPagamento() {
+        showLoading("Carregando condições de pagamento...")
+        Thread {
+            val result = MobileRepository.condicoesPagamento(usuarioLogado?.token ?: "")
+            runOnUiThread {
+                if (result.ok && result.data != null) { condicoesPagamentoCache = result.data; showSelecionarCondicaoPagamento(result.data) }
+                else showError(result.message.ifBlank { "Erro ao carregar condições de pagamento" }) { showSelecionarTransportadora(transportadorasCache) }
+            }
+        }.start()
+    }
+
+    private fun showSelecionarCondicaoPagamento(condicoes: List<CondicaoPagamentoResumo>) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Pagamento") { showSelecionarTransportadora(transportadorasCache) })
+        root.addView(pedidoHeader(3, "3. Escolha a condição de pagamento", ""))
+        root.addView(resumoPedidoCard())
+
+        root.addView(sectionLabel("Busca rápida"))
+        val busca = EditText(this).apply { hint = "Buscar por código, descrição ou prazo"; setSingleLine(true) }
+        root.addView(busca)
+        val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowBusca.addView(button("Buscar") {
+            val q = busca.text.toString().trim()
+            val filtrados = if (q.isBlank()) condicoesPagamentoCache else condicoesPagamentoCache.filter { it.codigo.contains(q, true) || it.descricao.contains(q, true) || it.prazo.contains(q, true) }
+            showSelecionarCondicaoPagamento(filtrados)
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowBusca.addView(secondaryButton("Limpar") { showSelecionarCondicaoPagamento(condicoesPagamentoCache) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        root.addView(rowBusca)
+
+        root.addView(sectionLabel("Condições de pagamento"))
+        condicoes.forEach { c -> root.addView(condicaoPagamentoCard(c)) }
+        root.addView(secondaryButton("Voltar para transportadora") { showSelecionarTransportadora(transportadorasCache) })
+    }
+
+    private fun condicaoPagamentoCard(c: CondicaoPagamentoResumo): View = card("${c.codigo} - ${c.descricao}", "Prazo: ${c.prazo}", "Selecionar pagamento") {
+        condicaoPagamentoSelecionada = c
+        loadProdutosParaPedido()
+    }
+
+    private fun loadProdutosParaPedido() {
+        showLoading("Carregando produtos...")
+        Thread {
+            val result = MobileRepository.produtos(usuarioLogado?.token ?: "", empresaIdAtiva())
+            runOnUiThread {
+                if (result.ok && result.data != null) { produtosCache = result.data; showMontarCarrinho(result.data) }
+                else showError(result.message, ::showHome)
+            }
+        }.start()
+    }
+
+    private fun showMontarCarrinho(produtos: List<ProdutoResumo>, focarLeitor: Boolean = false) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Itens") { showSelecionarCondicaoPagamento(condicoesPagamentoCache) })
+        root.addView(pedidoHeader(4, "4. Adicione os itens", ""))
+        root.addView(resumoPedidoCard(true))
+        root.addView(sectionLabel("SKU / código de barras"))
+        val codigoSku = EditText(this).apply {
+            hint = "Digite ou leia o SKU"
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT
+        }
+        root.addView(codigoSku)
+        val rowLeitor = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowLeitor.addView(button("Ler / adicionar") {
+            adicionarSkuAoCarrinho(codigoSku.text.toString(), codigoSku)
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowLeitor.addView(secondaryButton("Limpar") { codigoSku.setText(""); codigoSku.requestFocus() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        root.addView(rowLeitor)
+
+        root.addView(sectionLabel("Buscar produto"))
+        val busca = EditText(this).apply { hint = "Código ou nome do produto"; setSingleLine(true) }
+        root.addView(busca)
+        val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowBusca.addView(button("Buscar") {
+            val q = busca.text.toString().trim()
+            val filtrados = if (q.isBlank()) produtosCache else produtosCache.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) }
+            showMontarCarrinho(filtrados)
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowBusca.addView(secondaryButton("Limpar") { showMontarCarrinho(produtosCache) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        root.addView(rowBusca)
+        if (focarLeitor) codigoSku.post { codigoSku.requestFocus() }
+        root.addView(sectionLabel("Produtos"))
+        produtos.forEach { p -> root.addView(produtoPedidoCard(p)) }
+        root.addView(successButton("Finalizar no carrinho") { showCarrinho() })
+        root.addView(secondaryButton("Voltar para pagamento") { showSelecionarCondicaoPagamento(condicoesPagamentoCache) })
+    }
+
+    private fun adicionarSkuAoCarrinho(codigoLido: String, campoSku: EditText) {
+        val q = codigoLido.trim()
+        if (q.isBlank()) {
+            Toast.makeText(this, "Informe ou leia o SKU/código de barras", Toast.LENGTH_SHORT).show()
+            campoSku.requestFocus()
+            return
+        }
+        val lista = if (produtosCache.isNotEmpty()) produtosCache else MockRepository.produtos(empresaIdAtiva())
+        val produto = lista.firstOrNull { it.codigo.equals(q, true) }
+            ?: lista.firstOrNull { it.codigo.contains(q, true) || it.nome.contains(q, true) }
+        if (produto == null) {
+            Toast.makeText(this, "Produto não encontrado para o código $q", Toast.LENGTH_LONG).show()
+            campoSku.selectAll()
+            campoSku.requestFocus()
+            return
+        }
+        if (produto.estoque <= 0) {
+            Toast.makeText(this, "Produto sem estoque: ${produto.nome}", Toast.LENGTH_LONG).show()
+            campoSku.setText("")
+            campoSku.requestFocus()
+            return
+        }
+        val item = carrinho.firstOrNull { it.produto.codigo == produto.codigo && it.descontoPercentual == 0.0 }
+        if (item == null) carrinho.add(CarrinhoItem(produto, 1, 0.0)) else item.quantidade += 1
+        Toast.makeText(this, "${produto.nome} adicionado. Leia o próximo item.", Toast.LENGTH_SHORT).show()
+        campoSku.setText("")
+        showMontarCarrinho(produtosCache.ifEmpty { lista }, true)
+    }
+
+    private fun produtoPedidoCard(p: ProdutoResumo): View {
+        val precoUnitario = parseCurrency(p.preco)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(28, 22, 28, 22)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+
+        box.addView(TextView(this).apply {
+            text = "${p.codigo} - ${p.nome}"
+            textSize = 18f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+        })
+        box.addView(TextView(this).apply {
+            text = "Unitário: ${p.preco} • Estoque: ${p.estoque}"
+            textSize = 14f
+            setTextColor(if (p.estoque > 0) cinzaTexto else vermelho)
+            setPadding(0, 6, 0, 12)
+        })
+
+        if (p.estoque <= 0) {
+            box.addView(secondaryButton("Indisponível") { Toast.makeText(this, "Produto sem estoque", Toast.LENGTH_SHORT).show() })
+            return box
+        }
+
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val qtdInput = EditText(this).apply {
+            hint = "Qtd"
+            setText("1")
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setSingleLine(true)
+        }
+        val descontoInput = EditText(this).apply {
+            hint = "Desc. %"
+            setText("0")
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setSingleLine(true)
+        }
+        row.addView(qtdInput, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        row.addView(descontoInput, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        box.addView(row)
+
+        val resumo = TextView(this).apply {
+            textSize = 15f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(verde)
+            setPadding(0, 12, 0, 12)
+        }
+        box.addView(resumo)
+
+        fun atualizarResumo() {
+            val qtd = qtdInput.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1
+            val desconto = descontoInput.text.toString().replace(",", ".").toDoubleOrNull()?.coerceIn(0.0, 100.0) ?: 0.0
+            val unitComDesconto = precoUnitario * (1 - desconto / 100.0)
+            val total = unitComDesconto * qtd
+            resumo.text = "Com desconto: ${formatCurrency(unitComDesconto)} un. • Total: ${formatCurrency(total)}"
+        }
+
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { atualizarResumo() }
+            override fun afterTextChanged(s: Editable?) {}
+        }
+        qtdInput.addTextChangedListener(watcher)
+        descontoInput.addTextChangedListener(watcher)
+        atualizarResumo()
+
+        box.addView(button("Adicionar ao carrinho") {
+            val qtd = qtdInput.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1
+            val desconto = descontoInput.text.toString().replace(",", ".").toDoubleOrNull()?.coerceIn(0.0, 100.0) ?: 0.0
+            if (qtd > p.estoque) {
+                Toast.makeText(this, "Quantidade maior que o estoque disponível", Toast.LENGTH_LONG).show()
+                return@button
+            }
+            val item = carrinho.firstOrNull { it.produto.codigo == p.codigo && it.descontoPercentual == desconto }
+            if (item == null) carrinho.add(CarrinhoItem(p, qtd, desconto)) else item.quantidade += qtd
+            Toast.makeText(this, "Produto adicionado ao carrinho", Toast.LENGTH_SHORT).show()
+            showMontarCarrinho(produtosCache)
+        })
+        return box
+    }
+
+    private fun showCarrinho() {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Carrinho") { showMontarCarrinho(produtosCache) })
+        root.addView(pedidoHeader(5, "5. Revise e conclua", ""))
+        root.addView(resumoPedidoCard(false))
+        root.addView(card("Cliente", clienteSelecionado?.nome ?: "Nenhum cliente selecionado", "Trocar cliente") { showSelecionarCliente(clientesCache) })
+        root.addView(card("Transportadora", transportadoraSelecionada?.let { "${it.nome} • ${it.prazo} • ${it.frete}" } ?: "Nenhuma transportadora selecionada", "Trocar transportadora") { showSelecionarTransportadora(transportadorasCache) })
+        root.addView(card("Condição de pagamento", condicaoPagamentoSelecionada?.let { "${it.codigo} - ${it.descricao} • ${it.prazo}" } ?: "Nenhuma condição selecionada", "Trocar pagamento") { showSelecionarCondicaoPagamento(condicoesPagamentoCache) })
+        root.addView(sectionLabel("Observação do pedido"))
+        val obsInput = EditText(this).apply {
+            hint = "Ex.: entregar pela manhã, pedido de feira, observação comercial..."
+            setText(observacaoPedido)
+            minLines = 3
+            gravity = Gravity.TOP
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        }
+        root.addView(obsInput)
+        if (carrinho.isEmpty()) {
+            root.addView(card("Carrinho vazio", "Adicione produtos antes de enviar.", "Adicionar produtos") { showMontarCarrinho(produtosCache) })
+        } else {
+            root.addView(sectionLabel("Itens do carrinho"))
+            carrinho.forEach { item -> root.addView(carrinhoItemCard(item)) }
+            root.addView(card("Total geral", formatCurrency(totalCarrinho()), "Adicionar mais itens") { showMontarCarrinho(produtosCache) })
+            val row = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            row.addView(budgetButton("Manter como orçamento") { observacaoPedido = obsInput.text.toString(); gerarPedidoLocal() }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 10) })
+            row.addView(successButton("Enviar para aprovação") {
+                observacaoPedido = obsInput.text.toString()
+                Toast.makeText(this, "Na próxima etapa ligamos essa ação ao status de aprovação do ERP Web", Toast.LENGTH_LONG).show()
+                gerarPedidoLocal()
+            })
+            root.addView(row)
+        }
+        root.addView(secondaryButton("Cancelar pedido") { carrinho.clear(); clienteSelecionado = null; transportadoraSelecionada = null; condicaoPagamentoSelecionada = null; observacaoPedido = ""; showHome() })
+    }
+
+    private fun carrinhoItemCard(item: CarrinhoItem): View {
+        val subtotal = subtotalItem(item)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(28, 22, 28, 22)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        box.addView(TextView(this).apply { text = item.produto.nome; textSize = 18f; typeface = Typeface.DEFAULT_BOLD; setTextColor(azulEscuro) })
+        val subtotalBruto = parseCurrency(item.produto.preco) * item.quantidade
+        val descontoValor = subtotalBruto - subtotal
+        val detalheDesconto = if (item.descontoPercentual > 0.0) " • Desc: ${formatPercent(item.descontoPercentual)} (-${formatCurrency(descontoValor)})" else ""
+        box.addView(TextView(this).apply { text = "Qtd: ${item.quantidade} • Unitário ${item.produto.preco}$detalheDesconto • Subtotal ${formatCurrency(subtotal)}"; textSize = 14f; setTextColor(cinzaTexto); setPadding(0,6,0,10) })
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        row.addView(secondaryButton("-1") { if (item.quantidade > 1) item.quantidade -= 1 else carrinho.remove(item); showCarrinho() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,6,0) })
+        row.addView(button("+1") { item.quantidade += 1; showCarrinho() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(6,0,0,0) })
+        box.addView(row)
+        return box
+    }
+
+    private fun gerarPedidoLocal() {
+        val cliente = clienteSelecionado
+        if (cliente == null || transportadoraSelecionada == null || condicaoPagamentoSelecionada == null || carrinho.isEmpty()) {
+            Toast.makeText(this, "Selecione cliente, transportadora, pagamento e produtos", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val envio = PedidoEnvio(
+            empresaId = empresaIdAtiva(),
+            empresaNome = empresaAtiva?.nome ?: "",
+            codigoCliente = cliente.codigo,
+            nomeCliente = cliente.nome,
+            codigoTransportadora = transportadoraSelecionada?.codigo ?: "",
+            nomeTransportadora = transportadoraSelecionada?.nome ?: "",
+            codigoCondicaoPagamento = condicaoPagamentoSelecionada?.codigo ?: "",
+            condicaoPagamento = condicaoPagamentoSelecionada?.descricao ?: "",
+            observacao = observacaoPedido,
+            itens = carrinho.map { item ->
+                PedidoEnvioItem(
+                    codigoProduto = item.produto.codigo,
+                    nomeProduto = item.produto.nome,
+                    quantidade = item.quantidade,
+                    precoUnitario = item.produto.preco,
+                    descontoPercentual = item.descontoPercentual,
+                    subtotalComDesconto = formatCurrency(subtotalItem(item))
+                )
+            },
+            total = formatCurrency(totalCarrinho())
+        )
+
+        showLoading(if (AppConfig.MOCK_MODE) "Gerando orçamento..." else "Enviando pedido para o ERP Web...")
+        Thread {
+            val result = MobileRepository.criarPedido(usuarioLogado?.token ?: "", envio)
+            runOnUiThread {
+                if (result.ok && result.data != null) {
+                    pedidosCriados.add(0, result.data)
+                    carrinho.clear()
+                    clienteSelecionado = null
+                    transportadoraSelecionada = null
+                    condicaoPagamentoSelecionada = null
+                    observacaoPedido = ""
+                    val msg = if (AppConfig.MOCK_MODE) "Orçamento ${result.data.numero} criado" else "Pedido ${result.data.numero} enviado ao ERP Web"
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                    showPedidoCriado(result.data)
+                } else {
+                    showError(result.message.ifBlank { "Falha ao gerar pedido" }, ::showCarrinho)
+                }
+            }
+        }.start()
+    }
+
+    private fun showPedidoCriado(p: PedidoResumo) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Pedido finalizado") { showHome() })
+        root.addView(title("Pedido finalizado"))
+        root.addView(pedidoCard(p))
+        root.addView(button("Pedidos") { loadPedidos() })
+        root.addView(secondaryButton("Voltar ao painel") { showHome() })
+    }
+
+    private fun loadPedidos() {
+        showLoading("Carregando pedidos...")
+        Thread {
+            val result = MobileRepository.pedidos(usuarioLogado?.token ?: "", empresaIdAtiva())
+            runOnUiThread { if (result.ok && result.data != null) showPedidos(pedidosCriados + result.data) else showError(result.message, ::showHome) }
+        }.start()
+    }
+
+    private fun showPedidos(pedidos: List<PedidoResumo>) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Pedidos") { showHome() })
+        root.addView(title("Pedidos"))
+        root.addView(formSection("Resumo da carteira", "📊",
+            twoColumns(miniInfo("Pedidos", pedidos.size.toString(), true), miniInfo("Editáveis", pedidos.count { it.podeEditar }.toString(), true)),
+            twoColumns(miniInfo("Integrados", pedidos.count { !it.podeEditar }.toString()), miniInfo("Total local", pedidosCriados.size.toString()))
+        ))
+        root.addView(premiumSearchBox("Buscar por número, cliente ou status", { q ->
+            val filtrados = if (q.isBlank()) pedidosCriados + pedidos else pedidos.filter { it.numero.contains(q, true) || it.cliente.contains(q, true) || it.status.contains(q, true) }
+            showPedidos(filtrados)
+        }, { loadPedidos() }))
+        root.addView(sectionLabel("Pedidos recentes"))
+        if (pedidos.isEmpty()) root.addView(card("Nenhum pedido encontrado", "", "Novo pedido") { iniciarNovoPedido() })
+        pedidos.forEach { p -> root.addView(pedidoCard(p)) }
+        root.addView(button("Novo pedido") { iniciarNovoPedido() })
+        root.addView(secondaryButton("Voltar ao menu") { showHome() })
+    }
+
+    private fun pedidoCard(p: PedidoResumo): View {
+        val podeEditar = p.podeEditar
+        val corStatus = statusColor(p.status)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            setPadding(22, 18, 22, 18)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        val topo = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        topo.addView(TextView(this).apply {
+            text = "🧾"
+            textSize = 28f
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.rgb(239, 246, 255), 24f, Color.rgb(191, 219, 254))
+            setPadding(16, 10, 16, 10)
+        })
+        topo.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 0, 0, 0)
+            addView(TextView(context).apply { text = "Pedido ${p.numero}"; textSize = 19f; typeface = Typeface.DEFAULT_BOLD; setTextColor(azulEscuro) })
+            addView(TextView(context).apply { text = p.cliente; textSize = 14f; setTextColor(cinzaTexto) })
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        topo.addView(statusBadge(p.status, corStatus))
+        box.addView(topo)
+        box.addView(twoColumns(
+            miniInfo("Total", p.total, true),
+            miniInfo("Edição", if (podeEditar) "Liberada" else "Bloqueada")
+        ))
+        box.addView(TextView(this).apply {
+            text = if (podeEditar) "Editável" else "Integrado"
+            textSize = 13f
+            setTextColor(if (podeEditar) azul else vermelho)
+            setPadding(2, 8, 2, 12)
+        })
+        box.addView(button(if (podeEditar) "Abrir / reabrir pedido" else "Consultar pedido") {
+            Toast.makeText(this, if (podeEditar) "Edição real entra na próxima etapa" else "Pedido bloqueado por integração", Toast.LENGTH_LONG).show()
+        })
+        return box
+    }
+
+    private fun loadProdutos() {
+        showLoading("Carregando produtos...")
+        Thread {
+            val result = MobileRepository.produtos(usuarioLogado?.token ?: "", empresaIdAtiva())
+            runOnUiThread { if (result.ok && result.data != null) { produtosCache = result.data; showProdutos(result.data) } else showError(result.message, ::showHome) }
+        }.start()
+    }
+
+    private fun showProdutos(produtos: List<ProdutoResumo>) {
+        root = baseRoot(); setScreen(root)
+        root.addView(topBackBar("Produtos") { showHome() })
+        root.addView(title("Produtos"))
+        root.addView(subtitle("Consulta de catálogo com foto, categoria, preço, estoque e detalhes comerciais."))
+
+        val busca = EditText(this).apply { hint = "Buscar por código, nome ou categoria"; setSingleLine(true) }
+        root.addView(busca)
+
+        val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        rowBusca.addView(button("Buscar") {
+            val q = busca.text.toString().trim()
+            showProdutos(if (q.isBlank()) produtosCache else produtosCache.filter {
+                it.codigo.contains(q, true) || it.nome.contains(q, true) || it.categoria.contains(q, true)
+            })
+        }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
+        rowBusca.addView(secondaryButton("Limpar") { showProdutos(produtosCache) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
+        root.addView(rowBusca)
+
+        root.addView(sectionLabel("Catálogo"))
+        if (produtos.isEmpty()) {
+            root.addView(card("Nenhum produto encontrado", "", "Voltar ao catálogo") { showProdutos(produtosCache) })
+        } else {
+            produtos.forEach { p -> root.addView(produtoConsultaCard(p)) }
+        }
+        root.addView(secondaryButton("Voltar") { showHome() })
+    }
+
+    private fun produtoConsultaCard(p: ProdutoResumo): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(28, 22, 28, 22)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
+        }
+        box.addView(produtoImage(p, 260))
+        box.addView(TextView(this).apply {
+            text = "${p.codigo} - ${p.nome}"
+            textSize = 19f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(azulEscuro)
+            setPadding(0, 14, 0, 4)
+        })
+        box.addView(TextView(this).apply {
+            text = "${p.categoria} • ${p.preco} • Estoque: ${p.estoque}"
+            textSize = 14f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(if (p.estoque > 0) cinzaTexto else vermelho)
+            setPadding(0, 0, 0, 10)
+        })
+        box.addView(TextView(this).apply {
+            text = p.descricao
+            textSize = 14f
+            setTextColor(cinzaTexto)
+            setPadding(0, 0, 0, 12)
+        })
+        box.addView(button("Consultar detalhes") { showProdutoDetalhe(p) })
+        return box
+    }
+
+    private fun showProdutoDetalhe(p: ProdutoResumo) {
+        root = baseRoot(); setScreen(root)
+        root.addView(title(p.nome))
+        root.addView(produtoImage(p, 420))
+        root.addView(card("Código", p.codigo, "Copiar código") {
+            Toast.makeText(this, "Código ${p.codigo}", Toast.LENGTH_SHORT).show()
+        })
+        root.addView(card("Informações comerciais", "Categoria: ${p.categoria}\nPreço tabela: ${p.preco}\nEstoque disponível: ${p.estoque}", "Adicionar em novo pedido") {
+            if (produtosCache.isEmpty()) produtosCache = MockRepository.produtos(empresaIdAtiva())
+            iniciarNovoPedido()
+        })
+        root.addView(card("Descrição", p.descricao, "Voltar ao catálogo") { showProdutos(produtosCache) })
+        root.addView(secondaryButton("Voltar para produtos") { showProdutos(produtosCache) })
+    }
+
+    private fun produtoImage(p: ProdutoResumo, altura: Int): ImageView = ImageView(this).apply {
+        val resId = resources.getIdentifier(p.fotoRes, "drawable", packageName)
+        if (resId != 0) setImageResource(resId) else setImageResource(resources.getIdentifier("produto_padrao", "drawable", packageName))
+        scaleType = ImageView.ScaleType.CENTER_CROP
+        adjustViewBounds = true
+        setBackgroundColor(Color.rgb(226, 232, 240))
+        layoutParams = LinearLayout.LayoutParams(-1, altura).apply { setMargins(0, 0, 0, 8) }
+    }
+
+    private fun showConfig() {
+        root = baseRoot(); setScreen(root)
+        root.addView(title("Configuração da API"))
+        root.addView(card("Modo atual", if (AppConfig.MOCK_MODE) "MOCK_MODE=true: seguro para testar pedidos sem alterar o ERP." else "MOCK_MODE=false: app usando API real.", "Ok") { showHome() })
+        root.addView(card("URL da API", AppConfig.API_BASE_URL, "Voltar") { showHome() })
+    }
+
+    private fun showError(msg: String, back: () -> Unit) {
+        root = baseRoot(); setScreen(root)
+        root.addView(title("Não foi possível carregar"))
+        root.addView(subtitle(msg.ifBlank { "Verifique a URL da API ou ative o modo mock." }))
+        root.addView(secondaryButton("Voltar") { back() })
+    }
+
+    private fun statusColor(status: String): Int = when {
+        status.contains("integrado", true) -> verde
+        status.contains("aprovado", true) -> azul
+        status.contains("orçamento", true) -> amarelo
+        status.contains("digitação", true) -> cinzaTexto
+        else -> cinzaTexto
+    }
+
+    private fun parseCurrency(value: String): Double {
+        return value.replace("R$", "").replace(".", "").replace(",", ".").trim().toDoubleOrNull() ?: 0.0
+    }
+
+    private fun subtotalItem(item: CarrinhoItem): Double = parseCurrency(item.produto.preco) * item.quantidade * (1 - item.descontoPercentual / 100.0)
+
+    private fun totalCarrinho(): Double = carrinho.sumOf { subtotalItem(it) }
+
+    private fun formatPercent(value: Double): String = String.format(Locale("pt", "BR"), "%.2f%%", value).replace(",00%", "%")
+
+    private fun formatCurrency(value: Double): String = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(value)
+}
