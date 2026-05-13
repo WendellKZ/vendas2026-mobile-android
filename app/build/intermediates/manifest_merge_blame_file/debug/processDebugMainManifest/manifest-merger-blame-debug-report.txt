@@ -20,30 +20,29 @@
 16        android:extractNativeLibs="false"
 17        android:label="Vendas 2026"
 17-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:5:9-36
-18        android:testOnly="true"
-19        android:theme="@style/AppTheme"
-19-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:6:9-40
-20        android:usesCleartextTraffic="true" >
-20-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:7:9-44
-21        <activity
-21-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:8:9-16:20
-22            android:name="com.vendas2026.mobile.MainActivity"
-22-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:9:13-41
-23            android:exported="true"
-23-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:11:13-36
-24            android:screenOrientation="portrait" >
-24-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:10:13-49
-25            <intent-filter>
-25-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:12:13-15:29
-26                <action android:name="android.intent.action.MAIN" />
-26-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:13:17-69
-26-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:13:25-66
-27
-28                <category android:name="android.intent.category.LAUNCHER" />
-28-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:14:17-77
-28-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:14:27-74
-29            </intent-filter>
-30        </activity>
-31    </application>
-32
-33</manifest>
+18        android:theme="@style/AppTheme"
+18-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:6:9-40
+19        android:usesCleartextTraffic="true" >
+19-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:7:9-44
+20        <activity
+20-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:8:9-16:20
+21            android:name="com.vendas2026.mobile.MainActivity"
+21-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:9:13-41
+22            android:exported="true"
+22-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:11:13-36
+23            android:screenOrientation="portrait" >
+23-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:10:13-49
+24            <intent-filter>
+24-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:12:13-15:29
+25                <action android:name="android.intent.action.MAIN" />
+25-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:13:17-69
+25-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:13:25-66
+26
+27                <category android:name="android.intent.category.LAUNCHER" />
+27-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:14:17-77
+27-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:14:27-74
+28            </intent-filter>
+29        </activity>
+30    </application>
+31
+32</manifest>

@@ -63,7 +63,32 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.statusBarColor = fundo
         window.navigationBarColor = fundo
+        loadSavedApiConfig()
         showLogin()
+    }
+
+    private fun loadSavedApiConfig() {
+        val prefs = getSharedPreferences("vendas2026_config", MODE_PRIVATE)
+        val savedUrl = prefs.getString("api_base_url", null)
+        if (!savedUrl.isNullOrBlank()) {
+            AppConfig.API_BASE_URL = normalizeApiUrl(savedUrl)
+        }
+    }
+
+    private fun saveApiConfig(url: String) {
+        val normalized = normalizeApiUrl(url)
+        AppConfig.API_BASE_URL = normalized
+        getSharedPreferences("vendas2026_config", MODE_PRIVATE)
+            .edit()
+            .putString("api_base_url", normalized)
+            .apply()
+    }
+
+    private fun normalizeApiUrl(url: String): String {
+        var value = url.trim()
+        if (value.isBlank()) return "http://10.0.2.2:5098"
+        if (!value.startsWith("http://") && !value.startsWith("https://")) value = "http://$value"
+        return value.trimEnd('/')
     }
 
     private fun setScreen(content: LinearLayout) {
@@ -332,6 +357,42 @@ class MainActivity : Activity() {
         addView(TextView(context).apply { text = valor; textSize = if (destaque) 18f else 14f; typeface = Typeface.DEFAULT_BOLD; setTextColor(if (destaque) azul else azulEscuro) })
     }
 
+
+    private fun servidorAtualCard(): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.rgb(239, 246, 255), 28f, Color.rgb(191, 219, 254))
+            setPadding(18, 14, 18, 14)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) }
+        }
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        row.addView(TextView(this).apply {
+            text = "🌐"
+            textSize = 22f
+            gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(dp(42), -2))
+        row.addView(TextView(this).apply {
+            text = "Servidor\n${AppConfig.API_BASE_URL}"
+            textSize = 12.5f
+            setTextColor(azulEscuro)
+            typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        row.addView(TextView(this).apply {
+            text = "Alterar"
+            textSize = 13f
+            setTextColor(azul)
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(14, 10, 14, 10)
+            setOnClickListener { showConfig() }
+        })
+        box.addView(row)
+        return box
+    }
+
     private fun showLogin() {
         root = baseRoot()
         root.gravity = Gravity.CENTER_HORIZONTAL
@@ -359,6 +420,7 @@ class MainActivity : Activity() {
             setPadding(0, 18, 0, 8)
         })
         root.addView(hero)
+        root.addView(servidorAtualCard())
 
         val cardLogin = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -380,6 +442,7 @@ class MainActivity : Activity() {
             if (usuario.text.isBlank() || senha.text.isBlank()) Toast.makeText(this, "Informe usuário e senha", Toast.LENGTH_SHORT).show()
             else doLogin(usuario.text.toString(), senha.text.toString())
         })
+        cardLogin.addView(secondaryButton("⚙ Alterar servidor / IP do ERP") { showConfig() }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(10), 0, 0) })
         root.addView(cardLogin)
     }
 
@@ -389,7 +452,11 @@ class MainActivity : Activity() {
             val result = MobileRepository.login(usuario, senha)
             runOnUiThread {
                 if (result.ok && result.data != null) { usuarioLogado = result.data; loadEmpresas() }
-                else { Toast.makeText(this, result.message.ifBlank { "Falha no login" }, Toast.LENGTH_LONG).show(); showLogin() }
+                else {
+                    val msg = result.message.ifBlank { "Falha no login" }
+                    Toast.makeText(this, "$msg. Confira o servidor/IP do ERP.", Toast.LENGTH_LONG).show()
+                    showLogin()
+                }
             }
         }.start()
     }
@@ -1575,9 +1642,62 @@ class MainActivity : Activity() {
 
     private fun showConfig() {
         root = baseRoot(); setScreen(root)
-        root.addView(title("Configuração da API"))
-        root.addView(card("Modo atual", if (AppConfig.MOCK_MODE) "MOCK_MODE=true: seguro para testar pedidos sem alterar o ERP." else "MOCK_MODE=false: app usando API real.", "Ok") { showHome() })
-        root.addView(card("URL da API", AppConfig.API_BASE_URL, "Voltar") { showHome() })
+        root.addView(topBackBar("Configurar servidor") { showLogin() })
+        root.addView(title("Conectar ao ERP"))
+        root.addView(subtitle("No emulador use 10.0.2.2. No celular físico use o IP do computador na mesma rede Wi-Fi."))
+
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBg(Color.WHITE, 34f, Color.rgb(226, 232, 240))
+            setPadding(24, 22, 24, 24)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) }
+        }
+        val urlInput = premiumInput("Servidor", AppConfig.API_BASE_URL)
+        urlInput.setText(AppConfig.API_BASE_URL)
+        box.addView(TextView(this).apply { text = "No celular físico, use o IP do computador. Exemplo: http://192.168.0.105:5098"; textSize = 13f; setTextColor(cinzaTexto); setPadding(0,0,0,12) })
+        box.addView(labeledField("Endereço do servidor", urlInput))
+        box.addView(TextView(this).apply {
+            text = "Exemplos:\nEmulador: http://10.0.2.2:5098\nCelular: http://192.168.0.105:5098"
+            textSize = 13f
+            setTextColor(cinzaTexto)
+            setPadding(0, 4, 0, 14)
+        })
+        box.addView(button("Salvar servidor") {
+            saveApiConfig(urlInput.text.toString())
+            Toast.makeText(this, "Servidor salvo: ${AppConfig.API_BASE_URL}", Toast.LENGTH_LONG).show()
+            showLogin()
+        })
+        box.addView(secondaryButton("Testar conexão") {
+            testApiConnection(normalizeApiUrl(urlInput.text.toString()))
+        }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(10), 0, 0) })
+        root.addView(box)
+
+        root.addView(card("Endereço atual", AppConfig.API_BASE_URL, "Voltar") { showLogin() })
+    }
+
+    private fun testApiConnection(baseUrl: String) {
+        showLoading("Testando conexão...")
+        Thread {
+            try {
+                val conn = (URL(baseUrl.trimEnd('/') + "/api/mobile/ping").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 7000
+                    readTimeout = 7000
+                    setRequestProperty("Accept", "application/json")
+                }
+                val ok = conn.responseCode in 200..299
+                runOnUiThread {
+                    Toast.makeText(this, if (ok) "Conexão OK" else "Servidor respondeu HTTP ${conn.responseCode}", Toast.LENGTH_LONG).show()
+                    if (ok) saveApiConfig(baseUrl)
+                    showConfig()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this, e.message ?: "Falha ao conectar", Toast.LENGTH_LONG).show()
+                    showConfig()
+                }
+            }
+        }.start()
     }
 
     private fun showError(msg: String, back: () -> Unit) {
@@ -1607,3 +1727,4 @@ class MainActivity : Activity() {
 
     private fun formatCurrency(value: Double): String = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(value)
 }
+

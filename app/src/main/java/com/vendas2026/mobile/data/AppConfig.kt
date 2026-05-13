@@ -14,7 +14,7 @@ object AppConfig {
      * Celular físico acessando backend local:
      * use o IP do PC na rede, exemplo "http://192.168.0.50:5098"
      */
-    const val API_BASE_URL = "http://10.0.2.2:5098"
+    var API_BASE_URL = "http://10.0.2.2:5098"
     const val MOCK_MODE = false
 
     const val ENDPOINT_LOGIN = "/api/mobile/login"

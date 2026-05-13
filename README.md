@@ -92,3 +92,26 @@ Se for testar em celular físico, troque em `AppConfig.kt` para o IP do computad
 const val API_BASE_URL = "http://192.168.0.105:5098"
 ```
 
+
+
+## V30 - Configuração do servidor no celular físico
+
+Esta versão mostra o servidor atual já na tela de login e traz o botão **Alterar servidor / IP do ERP**.
+
+Para celular físico, não use `10.0.2.2`. Use o IPv4 do computador na rede Wi-Fi, por exemplo:
+
+```text
+http://192.168.0.105:5098
+```
+
+O ERP deve estar rodando com:
+
+```powershell
+py -3.12 -m uvicorn app.main:app --host 0.0.0.0 --reload --port 5098
+```
+
+Teste no celular pelo navegador:
+
+```text
+http://IP_DO_PC:5098/api/mobile/ping
+```
