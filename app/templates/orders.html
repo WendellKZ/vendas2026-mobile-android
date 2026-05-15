@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="topbar"><div class="page-title"><h1>Pedidos</h1><p>Gestão de pedidos, aprovação e acompanhamento de status.</p></div><div class="actions"><a class="btn" href="/pedidos/novo">Novo pedido</a></div></div>
+<div class="card">
+  <div class="section-title"><h2>Pedidos cadastrados</h2></div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Cliente</th><th>Filial</th><th>Vendedor</th><th>Status</th><th>Total</th><th>Criado em</th><th></th></tr></thead><tbody>
+  {% for order in orders %}
+    <tr>
+      <td>{{ order.id }}</td>
+      <td>{{ order.customer.name }}</td>
+      <td>{{ order.branch.name }}</td>
+      <td>{{ order.seller.name }}</td>
+      <td><span class="badge {{ order.status }}">{{ order.status|status_label }}</span></td>
+      <td>R$ {{ order.net_total|money }}</td>
+      <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+      <td>
+        {% if order.status == 'em_aprovacao' %}
+        <form method="post" action="/pedidos/{{ order.id }}/aprovar"><button type="submit">Aprovar</button></form>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8"><div class="empty">Nenhum pedido cadastrado.</div></td></tr>
+  {% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

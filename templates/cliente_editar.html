@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Editar cliente</h2>
+      <p>Ajuste os dados comerciais e informe o local de entrega</p>
+    </div>
+  </div>
+
+  <form method="post" action="/clientes/editar/{{ customer.id }}" class="form-grid">
+    <div class="field"><label>Nome fantasia / Nome comercial</label><input name="name" value="{{ customer.name or '' }}" required></div>
+    <div class="field"><label>CNPJ</label><input name="document" value="{{ customer.document or '' }}"></div>
+
+    <div class="field full"><label>Razão Social</label><input name="corporate_name" value="{{ customer.corporate_name or '' }}"></div>
+
+    <div class="field"><label>Cidade</label><input name="city" value="{{ customer.city or '' }}"></div>
+    <div class="field"><label>Inscrição Estadual</label><input name="state_registration" value="{{ customer.state_registration or '' }}"></div>
+
+    <div class="field full"><label>Local de entrega</label><input name="delivery_location" value="{{ customer.delivery_location or '' }}" placeholder="Ex.: CD Manaus, Loja Centro, Endereço alternativo"></div>
+
+    <div class="field"><label>E-mail geral</label><input name="email" value="{{ customer.email or '' }}"></div>
+    <div class="field"><label>Telefone</label><input name="phone" value="{{ customer.phone or '' }}" placeholder="(00) 00000-0000"></div>
+    <div class="field"><label>E-mail de cobrança</label><input name="billing_email" value="{{ customer.billing_email or '' }}"></div>
+
+    <div class="field"><label>Status</label>
+      <select name="status">
+        <option value="ativo" {% if customer.status == 'ativo' %}selected{% endif %}>Ativo</option>
+        <option value="inativo" {% if customer.status == 'inativo' %}selected{% endif %}>Inativo</option>
+        <option value="prospect" {% if customer.status == 'prospect' %}selected{% endif %}>Prospect</option>
+      </select>
+    </div>
+
+    <div class="field"><label>Número Suframa</label><input name="suframa" value="{{ customer.suframa or '' }}"></div>
+
+    <div class="actions full">
+      <button type="submit" class="btn btn-primary">Salvar alterações</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

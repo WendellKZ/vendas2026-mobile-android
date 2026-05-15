@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" action="{{ form_action }}" id="pedido-form" class="order-builder">
+  <section class="panel-card">
+    <div class="panel-head"><div><h2>{{ page_title }}</h2><p>{{ page_subtitle }}</p></div></div>
+    <div class="form-grid">
+      <div class="field"><label>Cliente</label><select name="customer_id" id="customer-select" required><option value="">Selecione o cliente</option>{% for c in customers %}<option value="{{ c.id }}" data-delivery="{{ c.delivery_location or '' }}" {% if selected_customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Vendedor</label>{% if is_admin is defined and is_admin %}<select name="seller_id"><option value="">Selecione o vendedor</option>{% for s in sellers %}<option value="{{ s.id }}" {% if selected_seller_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>{% else %}<input value="{{ active_seller.name if active_seller else '' }}" readonly><input type="hidden" name="seller_id" value="{{ active_seller.id if active_seller else '' }}">{% endif %}</div>
+      <div class="field"><label>Condição de pagamento</label><input name="payment_condition" placeholder="28 dias" value="{{ selected_payment_condition }}"></div>
+      <div class="field"><label>Transportadora</label><select name="carrier_id"><option value="">Selecione a transportadora</option>{% for c in carriers %}<option value="{{ c.id }}" {% if selected_carrier_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+      <div class="field full"><label>Local de entrega</label><input name="delivery_location" id="delivery-location" placeholder="Ex.: CD Manaus, Loja Centro" value="{{ selected_delivery_location }}"></div>
+    </div>
+
+    <div class="info-banner" style="margin:18px 0;">Monte o pedido produto por produto. O sistema calcula total bruto, desconto e total líquido em tempo real.</div>
+
+    <div class="form-grid">
+      <div class="field full"><label>Produto do ERP</label><select id="product-select"><option value="">Selecione o produto</option>{% for p in products %}<option value="{{ p.id }}" data-code="{{ p.code }}" data-name="{{ p.name }}" data-price="{{ '%.2f'|format(p.price_table) }}" data-stock="{{ p.stock }}">{{ p.code }} - {{ p.name }} | R$ {{ '%.2f'|format(p.price_table) }} | Estoque {{ p.stock|int }}</option>{% endfor %}</select></div>
+      <div class="field full" id="product-preview-wrap" style="display:none;"><label>Produto selecionado</label><div class="product-preview-card"><div class="product-thumb" id="preview-thumb">PR</div><div><div class="product-code" id="preview-code">-</div><div class="product-name" id="preview-name">-</div><div class="product-meta"><span>Preço: <strong id="preview-price">R$ 0,00</strong></span><span>Estoque: <strong id="preview-stock">0</strong></span><span>Unitário c/ desconto: <strong id="preview-unit-discount">R$ 0,00</strong></span></div></div></div></div>
+      <div class="field"><label>Quantidade</label><input id="item-quantity" type="number" value="1" min="1"></div>
+      <div class="field"><label>Desconto (%)</label><input id="item-discount" type="number" step="0.01" value="0" placeholder="Ex.: 5"></div>
+      <div class="field full"><button type="button" class="btn btn-primary" id="add-item-btn">+ Inserir item no pedido</button></div>
+      <div class="field full"><div class="items-modern-card"><div class="items-modern-head"><div><strong>Itens do pedido</strong><span>Produtos inseridos no carrinho comercial</span></div></div><div id="items-list" class="items-list-empty"><div class="empty-items">Nenhum item inserido ainda.</div></div></div></div>
+    </div>
+    <div id="hidden-items-container"></div>
+  </section>
+
+  <aside class="summary-card sticky-summary">
+    <div class="items-modern-head"><div><strong>Resumo financeiro</strong><span>Prévia antes de salvar</span></div></div>
+    <div class="summary-row"><span>Total bruto</span><strong id="sum-gross">R$ 0,00</strong></div>
+    <div class="summary-row"><span>Total desconto</span><strong id="sum-discount">R$ 0,00</strong></div>
+    <div class="summary-row total"><span>Total líquido</span><strong id="sum-net">R$ 0,00</strong></div>
+    <div class="approval-alert" id="approval-alert">⚠️ Desconto acima de 10%. Sugestão: enviar para aprovação comercial.</div>
+    <div class="actions full" style="margin-top:16px;"><button type="submit" class="btn btn-primary" id="save-order-btn">{% if is_edit %}Salvar alterações{% else %}Salvar pedido{% endif %}</button><a href="/pedidos" class="btn btn-light">Voltar</a></div>
+  </aside>
+</form>
+<script>
+(function(){
+  const productSelect=document.getElementById("product-select"),previewWrap=document.getElementById("product-preview-wrap"),previewThumb=document.getElementById("preview-thumb"),previewCode=document.getElementById("preview-code"),previewName=document.getElementById("preview-name"),previewPrice=document.getElementById("preview-price"),previewStock=document.getElementById("preview-stock"),previewUnitDiscount=document.getElementById("preview-unit-discount"),qtyInput=document.getElementById("item-quantity"),discountInput=document.getElementById("item-discount"),addItemBtn=document.getElementById("add-item-btn"),itemsList=document.getElementById("items-list"),hiddenContainer=document.getElementById("hidden-items-container"),pedidoForm=document.getElementById("pedido-form"),customerSelect=document.getElementById("customer-select"),deliveryLocationInput=document.getElementById("delivery-location"),approvalAlert=document.getElementById("approval-alert");
+  let items={{ initial_items_json|safe }};
+  function money(v){return "R$ "+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function thumb(t){const w=(t||"").trim().split(" ").filter(Boolean);return w.length>1?(w[0][0]+w[1][0]).toUpperCase():(w[0]||"PR").slice(0,2).toUpperCase()}
+  function unit(price,disc){return Number(price||0)-(Number(price||0)*Number(disc||0)/100)}
+  function updatePreview(){const o=productSelect.options[productSelect.selectedIndex];if(!o||!o.value){previewWrap.style.display="none";return}previewWrap.style.display="block";previewThumb.textContent=thumb(o.dataset.name);previewCode.textContent=o.dataset.code||"-";previewName.textContent=o.dataset.name||"-";previewPrice.textContent=money(o.dataset.price);previewStock.textContent=o.dataset.stock||"0";previewUnitDiscount.textContent=money(unit(o.dataset.price,discountInput.value))}
+  function summary(){let gross=0,discVal=0,maxDisc=0;items.forEach(i=>{const g=Number(i.price||0)*Number(i.quantity||0),d=g*(Number(i.discount||0)/100);gross+=g;discVal+=d;maxDisc=Math.max(maxDisc,Number(i.discount||0))});document.getElementById("sum-gross").textContent=money(gross);document.getElementById("sum-discount").textContent=money(discVal);document.getElementById("sum-net").textContent=money(gross-discVal);approvalAlert.style.display=maxDisc>10?"block":"none"}
+  function render(){hiddenContainer.innerHTML="";if(!items.length){itemsList.className="items-list-empty";itemsList.innerHTML='<div class="empty-items">Nenhum item inserido ainda.</div>';summary();return}itemsList.className="";itemsList.innerHTML=items.map((i,idx)=>`<div class="added-item-card"><div class="added-thumb">${thumb(i.name)}</div><div class="added-main"><strong>${i.name}</strong><span><strong>Código:</strong> ${i.code||""}</span><span><strong>Qtd:</strong> ${i.quantity} • <strong>Desc:</strong> ${i.discount}%</span><span><strong>Unitário:</strong> ${money(unit(i.price,i.discount))} • <strong>Total:</strong> ${money(unit(i.price,i.discount)*i.quantity)}</span></div><div class="added-actions"><button type="button" class="btn btn-light" onclick="window.removePedidoItem(${idx})">Remover</button></div></div>`).join("");items.forEach(i=>hiddenContainer.insertAdjacentHTML("beforeend",`<input type="hidden" name="product_id" value="${i.product_id}"><input type="hidden" name="quantity" value="${i.quantity}"><input type="hidden" name="discount" value="${i.discount}">`));summary()}
+  addItemBtn.addEventListener("click",()=>{const o=productSelect.options[productSelect.selectedIndex],q=parseInt(qtyInput.value||"1",10),d=parseFloat(discountInput.value||"0");if(!o||!o.value){alert("Selecione um produto antes de inserir.");return}const estoque=parseFloat(o.dataset.stock||"0");if(q>estoque){alert("Estoque insuficiente para este produto. Disponível: "+estoque);return}const found=items.find(i=>Number(i.product_id)===Number(o.value));if(found){if((Number(found.quantity||0)+q)>estoque){alert("A soma deste item no pedido ultrapassa o estoque disponível: "+estoque);return}found.quantity+=q;found.discount=d}else{items.push({product_id:parseInt(o.value,10),code:o.dataset.code||"",name:o.dataset.name||"",quantity:q,discount:d,price:parseFloat(o.dataset.price||"0"),stock:parseFloat(o.dataset.stock||"0")})}render();productSelect.value="";qtyInput.value=1;discountInput.value=0;previewWrap.style.display="none"});
+  productSelect.addEventListener("change",updatePreview);discountInput.addEventListener("input",updatePreview);customerSelect.addEventListener("change",()=>{const o=customerSelect.options[customerSelect.selectedIndex];if(o&&o.dataset.delivery&&!deliveryLocationInput.value)deliveryLocationInput.value=o.dataset.delivery});window.removePedidoItem=function(idx){items.splice(idx,1);render()};pedidoForm.addEventListener("submit",e=>{if(!items.length){e.preventDefault();alert("Insira pelo menos 1 item no pedido antes de salvar.");return}render()});render();
+})();
+</script>
+{% endblock %}

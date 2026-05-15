@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="company-select-hero panel-card">
+  <div>
+    <span class="tag">Ambiente multiempresa</span>
+    <h2>Selecione a empresa de operação</h2>
+    <p>Após a escolha, catálogo, estoque, pedidos, metas e indicadores passam a usar esta empresa como contexto ativo.</p>
+  </div>
+</section>
+
+{% if request.query_params.get('erro') %}
+<div class="approval-alert inline-alert">Empresa não autorizada para este usuário.</div>
+{% endif %}
+
+<section class="company-select-grid">
+  {% for company in companies %}
+  <form method="post" action="/selecionar-empresa" class="company-select-card">
+    <input type="hidden" name="company_id" value="{{ company.id }}">
+    <div class="company-select-mark">{{ (company.name or 'E')[:2].upper() }}</div>
+    <div class="company-select-info">
+      <h3>{{ company.name }}</h3>
+      <p>{{ company.corporate_name or 'Empresa do grupo' }}</p>
+      <span>{{ company.document or 'CNPJ não informado' }}</span>
+    </div>
+    <button type="submit" class="btn btn-primary">Entrar nesta empresa</button>
+  </form>
+  {% else %}
+  <div class="info-banner">Nenhuma empresa autorizada para este usuário. Peça ao administrador para vincular uma empresa.</div>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Editar transportadora</h2>
+      <p>Ajuste os dados operacionais da transportadora</p>
+    </div>
+  </div>
+
+  <form method="post" action="/transportadoras/editar/{{ carrier.id }}" class="form-grid">
+    <div class="field"><label>CNPJ / Documento</label><input name="document" value="{{ carrier.document or '' }}"></div>
+    <div class="field"><label>Nome</label><input name="name" value="{{ carrier.name or '' }}" required></div>
+    <div class="field"><label>Cidade</label><input name="city" value="{{ carrier.city or '' }}"></div>
+    <div class="field"><label>Telefone</label><input name="phone" value="{{ carrier.phone or '' }}"></div>
+    <div class="field full"><label>E-mail</label><input name="email" value="{{ carrier.email or '' }}"></div>
+
+    <div class="actions full">
+      <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      <a href="/transportadoras" class="btn btn-light">Voltar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

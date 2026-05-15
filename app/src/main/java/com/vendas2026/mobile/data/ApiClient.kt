@@ -9,6 +9,7 @@ import com.vendas2026.mobile.model.ProdutoResumo
 import com.vendas2026.mobile.model.EmpresaResumo
 import com.vendas2026.mobile.model.UsuarioLogado
 import com.vendas2026.mobile.model.TransportadoraResumo
+import com.vendas2026.mobile.model.MobileRemoteConfig
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.OutputStreamWriter
@@ -185,6 +186,33 @@ object ApiClient {
         }
     }
 
+
+    fun mobileConfig(token: String): ApiResult<MobileRemoteConfig> {
+        return try {
+            val o = JSONObject(request("GET", AppConfig.ENDPOINT_CONFIG_MOBILE, token = token))
+            val cfg = o.optJSONObject("config") ?: o
+            ApiResult(true, MobileRemoteConfig(
+                appVersionLabel = cfg.optString("app_version_label", cfg.optString("versao", "V38")),
+                mensagemHome = cfg.optString("mensagem_home", ""),
+                corPrimaria = cfg.optString("cor_primaria", "#2563EB"),
+                mostrarNotificacoes = cfg.optBoolean("mostrar_notificacoes", true),
+                mostrarRota = cfg.optBoolean("mostrar_rota", true),
+                mostrarHistorico = cfg.optBoolean("mostrar_historico", true),
+                mostrarCampanhas = cfg.optBoolean("mostrar_campanhas", true),
+                mostrarOffline = cfg.optBoolean("mostrar_offline", true),
+                mostrarEmpresa = cfg.optBoolean("mostrar_empresa", true),
+                labelNovoPedido = cfg.optString("label_novo_pedido", "Novo pedido"),
+                labelPedidos = cfg.optString("label_pedidos", "Pedidos"),
+                labelProdutos = cfg.optString("label_produtos", "Produtos"),
+                labelClientes = cfg.optString("label_clientes", "Clientes"),
+                labelNovoCliente = cfg.optString("label_novo_cliente", "Novo cliente"),
+                labelTransportadora = cfg.optString("label_transportadora", "Transportadora")
+            ))
+        } catch (e: Exception) {
+            ApiResult(false, message = e.message ?: "Configuração remota indisponível")
+        }
+    }
+
     fun criarPedido(token: String, pedido: PedidoEnvio): ApiResult<PedidoResumo> {
         return try {
             val itens = JSONArray()
@@ -210,6 +238,10 @@ object ApiClient {
                 .put("observacao", pedido.observacao)
                 .put("total", pedido.total)
                 .put("origem", pedido.origem)
+                .put("tipo_finalizacao", pedido.tipoFinalizacao)
+                .put("acao", pedido.tipoFinalizacao)
+                .put("status_solicitado", if (pedido.tipoFinalizacao == "APROVACAO") "EM_APROVACAO" else "ORCAMENTO")
+                .put("manter_orcamento", pedido.tipoFinalizacao == "ORCAMENTO")
                 .put("itens", itens)
             val o = JSONObject(request("POST", AppConfig.ENDPOINT_CRIAR_PEDIDO, token = token, body = body))
             val status = o.optString("status", "Orçamento")

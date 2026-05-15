@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Catálogo comercial V17</h2>
+      <p>Produtos, preço de tabela, preço mínimo e estoque separados pela empresa ativa</p>
+    </div>
+    <span class="status-pill">Catálogo por empresa</span>
+  </div>
+  <div class="info-banner"><strong>V17:</strong> cada empresa mantém seu próprio catálogo, preço e saldo. Clientes e transportadoras continuam compartilhados.</div>
+</section>
+
+<section class="catalog-grid">
+  {% for p in products[:9] %}
+  {% set saldo = p.stock or 0 %}
+  <article class="catalog-card">
+    <div class="catalog-thumb">{{ (p.name or 'PR')[:2].upper() }}</div>
+    <div>
+      <h3>{{ p.name }}</h3>
+      <p>{{ p.code }} • {{ p.category or 'Sem categoria' }}</p>
+      <div class="catalog-meta">
+        <span>R$ {{ '%.2f'|format(p.price_table or 0) }}</span>
+        <span class="{% if saldo <= 0 %}text-danger{% elif saldo <= 5 %}text-warning{% endif %}">Estoque {{ saldo|int }}</span>
+      </div>
+    </div>
+  </article>
+  {% else %}
+  <div class="panel-card"><p>Nenhum produto disponível.</p></div>
+  {% endfor %}
+</section>
+
+<section class="panel-card" style="margin-top:18px;">
+  <div class="panel-head">
+    <div>
+      <h2>Novo produto da empresa ativa</h2>
+      <p>Cadastro rápido para teste local. Em produção, estes dados podem vir do ERP/Sankhya.</p>
+    </div>
+  </div>
+  <form method="post" action="/produtos" class="form-grid">
+    <div class="field"><label>Código</label><input name="code" required placeholder="Ex.: 1001"></div>
+    <div class="field"><label>Produto</label><input name="name" required placeholder="Nome comercial"></div>
+    <div class="field"><label>Categoria</label><input name="category" placeholder="Linha/Categoria"></div>
+    <div class="field"><label>Unidade</label><input name="unit" value="UN"></div>
+    <div class="field"><label>Preço tabela</label><input name="price_table" type="number" step="0.01" value="0"></div>
+    <div class="field"><label>Preço mínimo</label><input name="price_minimum" type="number" step="0.01" value="0"></div>
+    <div class="field"><label>Comissão (%)</label><input name="commission" type="number" step="0.01" value="0"></div>
+    <div class="field"><label>Estoque</label><input name="stock" type="number" step="1" value="0"></div>
+    <div class="field full"><button class="btn btn-primary" type="submit">Cadastrar no catálogo da empresa ativa</button></div>
+  </form>
+</section>
+
+<section class="panel-card" style="margin-top:18px;">
+  <div class="panel-head">
+    <div><h2>Lista completa</h2><p>Catálogo, tabela de preço e estoque real separados por empresa</p></div>
+    <a class="btn btn-primary btn-sm" href="/pedidos/novo">Criar pedido</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Preço tabela</th><th>Preço mínimo</th><th>Margem</th><th>Estoque</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for p in products %}
+        {% set margem = (p.price_table or 0) - (p.price_minimum or 0) %}
+        {% set saldo = p.stock or 0 %}
+        <tr>
+          <td><strong>{{ p.code }}</strong></td>
+          <td>{{ p.name }}</td>
+          <td>{{ p.category or '-' }}</td>
+          <td>R$ {{ '%.2f'|format(p.price_table or 0) }}</td>
+          <td>R$ {{ '%.2f'|format(p.price_minimum or 0) }}</td>
+          <td>R$ {{ '%.2f'|format(margem) }}</td>
+          <td>{{ saldo|int }}</td>
+          <td>
+            {% if saldo <= 0 %}<span class="badge badge-cancelado">Sem estoque</span>
+            {% elif saldo <= 5 %}<span class="badge badge-em_aprovacao">Baixo estoque</span>
+            {% else %}<span class="badge badge-aprovado">Disponível</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="8">Nenhum produto disponível.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

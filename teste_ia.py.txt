@@ -1,0 +1,19 @@
+from app.db.session import SessionLocal
+from app.models.product import Product
+from app.services.price_suggestion_service import suggest_price_for_product
+from app.services.historical_pricing_service import build_price_insight
+
+db = SessionLocal()
+
+produto = db.query(Product).first()
+
+if not produto:
+    print("Nenhum produto encontrado.")
+else:
+    print("\n=== V12 - Sugestão de Preço ===")
+    print(suggest_price_for_product(produto, discount_percent=10))
+
+    print("\n=== V13 - Inteligência por Histórico ===")
+    print(build_price_insight(db, produto.id))
+
+db.close()

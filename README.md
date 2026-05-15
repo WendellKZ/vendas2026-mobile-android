@@ -1,117 +1,92 @@
-# App Android Vendas 2026 - V26 Integração Web
+# ERP Vendas Completo
 
-Versão focada em deixar o app mais funcional para representantes e preparar o pedido para aparecer no ERP Web.
+Projeto FastAPI com painel visual, cadastro de clientes, produtos e pedidos.
 
-## O que mudou nesta V26
+## Portas
+- API e painel: `5098`
+- PostgreSQL: `5434`
 
-- Removida a aba/card **Segurança** do menu.
-- Mantido o card **Empresa** para troca de empresa ativa.
-- App configurado com `MOCK_MODE=false` para enviar pedidos pela API do ERP Web.
-- Pedido criado no app é enviado para `POST /api/mobile/pedidos`.
-- Patch Flask incluso em `backend_patch_flask/mobile_api.py` para consultar pedidos em `/mobile/pedidos`.
-
-## Login de teste
-
-Com o patch Flask aplicado, o login aceita usuário e senha para teste:
-
-```text
-admin
-123
+## Subir com Docker
+```powershell
+docker compose down
+docker compose up -d --build
 ```
 
-## Passo 2 - Aplicar a API no ERP Web
-
-1. Copie `backend_patch_flask/mobile_api.py` para a raiz do ERP Web, ao lado do `app.py` ou `run.py`.
-2. No arquivo principal Flask, depois de criar o `app`, adicione:
-
-```python
-from mobile_api import mobile_api
-app.register_blueprint(mobile_api)
+## Popular dados iniciais
+```powershell
+docker compose exec api sh -lc "PYTHONPATH=/app python scripts/seed.py"
 ```
 
-3. Rode o ERP Web localmente.
-4. Teste no navegador:
+## Acessos
+- Swagger: `http://localhost:5098/docs`
+- Painel: `http://localhost:5098/painel`
+- Pedidos: `http://localhost:5098/pedidos`
+- Clientes: `http://localhost:5098/clientes`
+- Produtos: `http://localhost:5098/produtos`
 
-```text
-http://localhost:5098/mobile/pedidos
+## Observação
+Este pacote foi preparado para ser copiado por cima da pasta oficial do projeto:
+`C:\erp_vendas_completo`
+
+
+## V-PRO Front Profissional
+
+Esta versão inclui uma evolução completa do front comercial:
+
+- Dashboard premium com atalhos rápidos e cards de indicadores.
+- Menu lateral escuro, moderno e fixo.
+- Tela de pedidos em formato pipeline/lista profissional.
+- Fluxo de novo pedido com carrinho comercial, cálculo em tempo real e alerta de desconto alto.
+- Catálogo de produtos com cards visuais e lista operacional.
+- Rotas web de edição e integração de pedidos corrigidas.
+
+### Rodar localmente
+
+```bash
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## Passo 3 - Rodar no Android Studio
-
-No emulador Android, a URL padrão já está configurada como:
-
-```text
-http://10.0.2.2:5098
-```
-
-Se for testar em celular físico, altere em:
-
-```text
-app/src/main/java/com/vendas2026/mobile/data/AppConfig.kt
-```
-
-Troque `API_BASE_URL` pelo IP do seu computador na rede, por exemplo:
-
-```kotlin
-const val API_BASE_URL = "http://192.168.0.50:5098"
-```
-
-## Passo 4 - Validar pedido integrado
-
-1. Abra o app.
-2. Faça login.
-3. Selecione a empresa.
-4. Crie um pedido.
-5. Finalize o carrinho.
-6. No ERP Web, abra:
-
-```text
-http://localhost:5098/mobile/pedidos
-```
-
-O pedido criado no app deve aparecer nessa tela.
+Acesse: http://127.0.0.1:8000/painel
 
 
-## V27 - Ajuste para FastAPI/Uvicorn
+## Correção V-PRO 2.1
 
-Esta versão foi ajustada para o seu ERP Web rodando com:
+Esta versão corrige a tela vazia/erro ao abrir `localhost:5098`:
+
+- Inicialização do banco com tentativas automáticas para Docker/PostgreSQL.
+- Correção de compatibilidade com bancos antigos que ainda não tinham colunas novas.
+- Caminhos de `templates` e `static` robustos, independente da pasta onde o comando for executado.
+- Correção de rota duplicada em `/pedidos`.
+
+### Passo 2 — Aplicar
+Extraia este zip e substitua a pasta do projeto anterior.
+
+### Passo 3 — Rodar com Docker
+Dê dois cliques em `iniciar_docker.bat` ou rode:
 
 ```powershell
-py -3.12 -m uvicorn app.main:app --host 0.0.0.0 --reload --port 5098
+docker compose down
+docker compose up --build
 ```
 
-No emulador Android, a API fica configurada como:
+Acesse: `http://localhost:5098/painel`
 
-```text
-http://10.0.2.2:5098
-```
-
-Se for testar em celular físico, troque em `AppConfig.kt` para o IP do computador, exemplo:
-
-```kotlin
-const val API_BASE_URL = "http://192.168.0.105:5098"
-```
-
-
-
-## V30 - Configuração do servidor no celular físico
-
-Esta versão mostra o servidor atual já na tela de login e traz o botão **Alterar servidor / IP do ERP**.
-
-Para celular físico, não use `10.0.2.2`. Use o IPv4 do computador na rede Wi-Fi, por exemplo:
-
-```text
-http://192.168.0.105:5098
-```
-
-O ERP deve estar rodando com:
+### Passo 4 — Rodar local sem Docker
+Dê dois cliques em `iniciar_local_5098.bat` ou rode:
 
 ```powershell
-py -3.12 -m uvicorn app.main:app --host 0.0.0.0 --reload --port 5098
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 5098
 ```
 
-Teste no celular pelo navegador:
+### Passo 5 — Validar
+Abra:
 
-```text
-http://IP_DO_PC:5098/api/mobile/ping
-```
+- `http://localhost:5098/health`
+- `http://localhost:5098/painel`
+- `http://localhost:5098/pedidos`

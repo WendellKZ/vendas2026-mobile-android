@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title or 'ERP Vendas Completo' }}</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">ERP Vendas<small>Painel comercial completo</small></div>
+      <nav class="nav">
+        <a href="/painel" class="{% if page == 'painel' %}active{% endif %}">Painel</a>
+        <a href="/pedidos" class="{% if page == 'pedidos' %}active{% endif %}">Pedidos</a>
+        <a href="/pedidos/novo">Novo pedido</a>
+        <a href="/clientes" class="{% if page == 'clientes' %}active{% endif %}">Clientes</a>
+        <a href="/produtos" class="{% if page == 'produtos' %}active{% endif %}">Produtos</a>
+        <a href="/configuracoes" class="{% if page == 'configuracoes' %}active{% endif %}">Configurações</a>
+        <a href="/docs">Swagger API</a>
+      </nav>
+    </aside>
+    <main class="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

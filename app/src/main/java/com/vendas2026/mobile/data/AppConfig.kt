@@ -2,19 +2,19 @@ package com.vendas2026.mobile.data
 
 object AppConfig {
     /**
-     * V26 vem preparada para integrar com o ERP Web por API.
-     * Para gravar pedido no sistema Web:
-     * 1) aplique o patch Flask da pasta backend_patch_flask no ERP;
-     * 2) rode o ERP localmente;
-     * 3) mantenha MOCK_MODE=false para enviar pedidos ao ERP Web.
+     * V34 configurada para integração online com ERP Web no Render.
      *
-     * Emulador Android acessando backend local no PC:
-     * API_BASE_URL = "http://10.0.2.2:5098"
+     * EDITE AQUI a URL real do seu ERP publicado no Render.
+     * Exemplo:
+     * DEFAULT_API_BASE_URL = "https://vendas2026-erp.onrender.com"
      *
-     * Celular físico acessando backend local:
-     * use o IP do PC na rede, exemplo "http://192.168.0.50:5098"
+     * Importante:
+     * - Não use 10.0.2.2 no APK instalado no celular.
+     * - Não use porta 5098 quando o ERP estiver no Render.
+     * - Deixe sem barra no final.
      */
-    var API_BASE_URL = "http://10.0.2.2:5098"
+    const val DEFAULT_API_BASE_URL = "https://erp-vendas-vpro.onrender.com"
+    var API_BASE_URL = DEFAULT_API_BASE_URL
     const val MOCK_MODE = false
 
     const val ENDPOINT_LOGIN = "/api/mobile/login"
@@ -24,4 +24,5 @@ object AppConfig {
     const val ENDPOINT_TRANSPORTADORAS = "/api/mobile/transportadoras"
     const val ENDPOINT_CONDICOES_PAGAMENTO = "/api/mobile/condicoes-pagamento"
     const val ENDPOINT_CRIAR_PEDIDO = "/api/mobile/pedidos"
+    const val ENDPOINT_CONFIG_MOBILE = "/api/mobile/config"
 }

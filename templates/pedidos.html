@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card mobile-toolbar">
+  <div class="panel-head">
+    <div><h2>Pipeline de pedidos</h2><p>Orçamento, aprovação comercial e integração com ERP</p></div>
+    <a href="/pedidos/novo" class="btn btn-primary btn-sm">+ Criar pedido</a>
+  </div>
+  <div class="pipeline-tabs">
+    <span class="status-pill badge-em_orcamento">Em orçamento</span>
+    <span class="status-pill badge-em_aprovacao">Em aprovação</span>
+    <span class="status-pill badge-aprovado">Aprovado</span>
+    <span class="status-pill badge-integrado">Integrado</span>
+  </div>
+</section>
+
+<section class="order-list">
+  {% for o in orders %}
+  <article class="order-card pro-order-card">
+    <div>
+      <div class="actions-inline" style="margin-bottom:8px;">
+        <span class="badge badge-{{ o.status }}">{{ o.status|replace('_',' ')|title }}</span>
+        <span class="badge">#{{ o.id }}</span>
+        <span class="badge">{{ o.seller.name if o.seller else 'Sem vendedor' }}</span>
+      </div>
+      <h3>{{ o.customer.name if o.customer else 'Cliente não informado' }}</h3>
+      <p>{{ o.delivery_location or 'Entrega não informada' }} • {{ o.carrier.name if o.carrier else 'Sem transportadora' }} • {{ o.payment_condition or 'Sem pagamento' }}</p>
+      <div class="order-date-line">
+        <span class="order-date-badge">{{ order_day_badge(o.created_at) if order_day_badge is defined else '' }}</span>
+        <span class="order-date-text">Digitado em {{ format_order_datetime(o.created_at) if format_order_datetime is defined else '' }}</span>
+      </div>
+      {% if o.status in ['em_aprovacao','em_aprovacao_gestor','em_aprovacao_admin'] %}<div class="approval-alert inline-alert">⚠️ Pedido aguardando aprovação por regra de desconto.</div>{% endif %}
+      <div class="actions-inline" style="margin-top:12px;">
+        {% if o.status == 'em_orcamento' %}
+        <a class="btn btn-light btn-sm" href="/pedidos/editar/{{ o.id }}">Editar</a>
+        <a class="btn btn-light btn-sm" href="/pedidos/conferir/{{ o.id }}">Conferir</a>
+        <a class="btn btn-light btn-sm" href="mailto:?subject=Pedido%20{{ o.id }}{% if build_email_body is defined %}&body={{ build_email_body(o) }}{% endif %}">E-mail</a>
+        <a class="btn btn-light btn-sm" target="_blank" href="https://wa.me/?text={% if build_whatsapp_message is defined %}{{ build_whatsapp_message(o) }}{% else %}Pedido%20{{ o.id }}{% endif %}">WhatsApp</a>
+        <form method="post" action="/pedidos/integrar/{{ o.id }}" style="display:inline;" onsubmit="return confirm('Confirmar envio deste pedido ao ERP?');"><button type="submit" class="btn btn-primary btn-sm">Integrar ERP</button></form>
+        {% elif o.status in ['em_aprovacao','em_aprovacao_gestor','em_aprovacao_admin'] %}
+        <a class="btn btn-light btn-sm" href="/pedidos/conferir/{{ o.id }}">Resumo</a>
+        <form method="post" action="/pedidos/aprovar/{{ o.id }}" style="display:inline;"><button class="btn btn-success btn-sm" type="submit">Aprovar</button></form>
+        <form method="post" action="/pedidos/cancelar/{{ o.id }}" style="display:inline;" onsubmit="return confirm('Cancelar este pedido?');"><button class="btn btn-danger btn-sm" type="submit">Cancelar</button></form>
+        {% elif o.status == 'aprovado' %}
+        <a class="btn btn-light btn-sm" href="/pedidos/editar/{{ o.id }}">Editar/Reabrir</a>
+        <a class="btn btn-light btn-sm" href="/pedidos/conferir/{{ o.id }}">Resumo</a>
+        <form method="post" action="/pedidos/integrar/{{ o.id }}" style="display:inline;" onsubmit="return confirm('Confirmar envio deste pedido ao ERP? Depois de integrado, ele não poderá mais ser editado.');"><button type="submit" class="btn btn-primary btn-sm">Integrar ERP</button></form>
+        {% else %}
+        <a class="btn btn-light btn-sm" href="/pedidos/conferir/{{ o.id }}">Resumo</a>
+        <a class="btn btn-light btn-sm" target="_blank" href="https://wa.me/?text={% if build_whatsapp_message is defined %}{{ build_whatsapp_message(o) }}{% else %}Pedido%20{{ o.id }}{% endif %}">WhatsApp</a>
+        <span class="status-locked">Pedido bloqueado para edição</span>
+        {% endif %}
+      </div>
+    </div>
+    <div><div class="order-money">R$ {{ '%.2f'|format(o.total_net) }}</div><p style="text-align:right;">{{ o.items|length }} item(ns)</p></div>
+  </article>
+  {% else %}
+  <div class="info-banner">Nenhum pedido cadastrado. Crie um pedido para iniciar a operação.</div>
+  {% endfor %}
+</section>
+{% endblock %}

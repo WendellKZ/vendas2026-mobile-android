@@ -80,8 +80,28 @@ data class PedidoEnvio(
     val observacao: String,
     val itens: List<PedidoEnvioItem>,
     val total: String,
-    val origem: String = "APP_ANDROID"
+    val origem: String = "APP_ANDROID",
+    val tipoFinalizacao: String = "ORCAMENTO"
 )
+
+data class MobileRemoteConfig(
+    val appVersionLabel: String = "V38",
+    val mensagemHome: String = "",
+    val corPrimaria: String = "#2563EB",
+    val mostrarNotificacoes: Boolean = true,
+    val mostrarRota: Boolean = true,
+    val mostrarHistorico: Boolean = true,
+    val mostrarCampanhas: Boolean = true,
+    val mostrarOffline: Boolean = true,
+    val mostrarEmpresa: Boolean = true,
+    val labelNovoPedido: String = "Novo pedido",
+    val labelPedidos: String = "Pedidos",
+    val labelProdutos: String = "Produtos",
+    val labelClientes: String = "Clientes",
+    val labelNovoCliente: String = "Novo cliente",
+    val labelTransportadora: String = "Transportadora"
+)
+
 
 data class ApiResult<T>(
     val ok: Boolean,

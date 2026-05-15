@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero-panel">
+  <div class="hero-card mobile-hero">
+    <span class="hero-pill">V-PRO 4 • Inteligência comercial</span>
+    <h2>Regras comerciais cadastradas pelo sistema</h2>
+    <p>Configure desconto, aprovação por alçada e comissão sem mexer no código. O motor aplica prioridade por cliente, produto, vendedor ou regra global.</p>
+  </div>
+  <div class="panel-card" style="margin-bottom:0;">
+    <div class="panel-head"><div><h2>Como funciona</h2><p>Prioridade maior vence primeiro.</p></div></div>
+    <div class="quick-grid">
+      <div class="quick-action"><div class="quick-icon">🎯</div><div><strong>Escopo</strong><span>Global, cliente, produto ou vendedor</span></div></div>
+      <div class="quick-action"><div class="quick-icon">🪜</div><div><strong>Alçada</strong><span>Auto, gestor ou admin</span></div></div>
+      <div class="quick-action"><div class="quick-icon">💰</div><div><strong>Comissão</strong><span>Normal ou reduzida por desconto</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel-card">
+  <div class="panel-head"><div><h2>Nova regra</h2><p>Cadastre uma regra profissional para o motor comercial.</p></div></div>
+  <form class="form-grid" method="post" action="/regras/novo">
+    <label>Nome da regra<input name="name" placeholder="Ex: Cliente VIP até 12%" required></label>
+    <label>Tipo<select name="rule_type"><option value="discount">Desconto / Alçada</option><option value="commission">Comissão</option></select></label>
+    <label>Escopo<select name="scope" id="scopeSelect"><option value="global">Global</option><option value="customer">Cliente</option><option value="product">Produto</option><option value="seller">Vendedor</option></select></label>
+    <label>Referência<select name="reference_id" id="referenceSelect"><option value="">Aplicar globalmente</option></select></label>
+    <label>Prioridade<input type="number" name="priority" value="10"></label>
+    <label>Desconto máximo (%)<input type="number" step="0.01" name="max_discount_percent" value="5"></label>
+    <label>Até gestor (%)<input type="number" step="0.01" name="approval_limit_manager" value="5"></label>
+    <label>Até admin (%)<input type="number" step="0.01" name="approval_limit_admin" value="10"></label>
+    <label>Comissão normal (%)<input type="number" step="0.01" name="commission_percent" value="5"></label>
+    <label>Comissão com desconto alto (%)<input type="number" step="0.01" name="commission_high_discount_percent" value="2"></label>
+    <div style="align-self:end;"><button class="btn btn-primary" type="submit">Salvar regra</button></div>
+  </form>
+</section>
+
+<section class="panel-card">
+  <div class="panel-head"><div><h2>Regras cadastradas</h2><p>Controle ativo/inativo sem perder histórico.</p></div></div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Regra</th><th>Tipo</th><th>Escopo</th><th>Prioridade</th><th>Desconto</th><th>Alçada</th><th>Comissão</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>
+      {% for r in rules %}
+      <tr>
+        <td><strong>{{ r.name }}</strong></td>
+        <td>{{ 'Comissão' if r.rule_type == 'commission' else 'Desconto' }}</td>
+        <td>{{ r.scope|title }}{% if r.reference_id %} #{{ r.reference_id }}{% endif %}</td>
+        <td>{{ r.priority }}</td>
+        <td>{{ '%.2f'|format(r.max_discount_percent or 0) }}%</td>
+        <td>Gestor até {{ '%.2f'|format(r.approval_limit_manager or 0) }}% • Admin até {{ '%.2f'|format(r.approval_limit_admin or 0) }}%</td>
+        <td>{{ '%.2f'|format(r.commission_percent or 0) }}% / {{ '%.2f'|format(r.commission_high_discount_percent or 0) }}%</td>
+        <td><span class="badge {{ 'badge-aprovado' if r.active else 'badge-cancelado' }}">{{ 'Ativa' if r.active else 'Inativa' }}</span></td>
+        <td class="actions-inline"><form method="post" action="/regras/{{ r.id }}/status"><button class="btn btn-light btn-sm">{{ 'Desativar' if r.active else 'Ativar' }}</button></form><form method="post" action="/regras/{{ r.id }}/excluir" onsubmit="return confirm('Excluir esta regra?');"><button class="btn btn-danger btn-sm">Excluir</button></form></td>
+      </tr>
+      {% else %}<tr><td colspan="9">Nenhuma regra cadastrada.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<script>
+const refs = {
+  customer: [{% for c in customers %}{id: {{ c.id }}, name: {{ c.name|tojson }}},{% endfor %}],
+  product: [{% for p in products %}{id: {{ p.id }}, name: {{ p.name|tojson }}},{% endfor %}],
+  seller: [{% for s in sellers %}{id: {{ s.id }}, name: {{ s.name|tojson }}},{% endfor %}],
+  global: []
+};
+const scope = document.getElementById('scopeSelect');
+const ref = document.getElementById('referenceSelect');
+function fillRefs(){
+  const list = refs[scope.value] || [];
+  ref.innerHTML = '<option value="">'+(scope.value === 'global' ? 'Aplicar globalmente' : 'Selecione')+'</option>';
+  list.forEach(i => { const o=document.createElement('option'); o.value=i.id; o.textContent=i.name; ref.appendChild(o); });
+}
+scope.addEventListener('change', fillRefs); fillRefs();
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="executive-hero panel-card">
+  <div class="executive-hero-copy">
+    <span class="tag">V18 • Produção</span>
+    <h2>Gestão comercial pronta para operação real</h2>
+    <p>Visão executiva da empresa ativa, com pedidos, estoque, catálogo, comissões e alertas comerciais em uma experiência mais limpa e profissional.</p>
+    <div class="hero-metrics-strip">
+      <div><span>Vendas</span><strong>R$ {{ '%.2f'|format(total_sales or 0) }}</strong></div>
+      <div><span>Ticket médio</span><strong>R$ {{ '%.2f'|format(avg_ticket or 0) }}</strong></div>
+      <div><span>Pedidos abertos</span><strong>{{ open_count }}</strong></div>
+    </div>
+  </div>
+  <div class="executive-hero-actions">
+    <a class="btn btn-primary" href="/pedidos/novo">Novo pedido</a>
+    <a class="btn btn-light" href="/assistente-pedido">Pedido guiado</a>
+    <a class="btn btn-light" href="/produtos">Ver catálogo</a>
+  </div>
+</section>
+
+<section class="stats-grid production-stats">
+  <div class="stat-card accent-blue"><div class="stat-label">Clientes</div><div class="stat-value">{{ total_customers }}</div><div class="stat-foot">Base compartilhada</div></div>
+  <div class="stat-card accent-purple"><div class="stat-label">Produtos da empresa</div><div class="stat-value">{{ total_products }}</div><div class="stat-foot">Catálogo separado</div></div>
+  <div class="stat-card accent-blue"><div class="stat-label">Pedidos abertos</div><div class="stat-value">{{ open_count }}</div><div class="stat-foot">Orçamentos editáveis</div></div>
+  <div class="stat-card accent-orange"><div class="stat-label">Em aprovação</div><div class="stat-value">{{ approval_count }}</div><div class="stat-foot">Aguardando decisão</div></div>
+  <div class="stat-card accent-green"><div class="stat-label">Vendas</div><div class="stat-value">R$ {{ '%.2f'|format(total_sales or 0) }}</div><div class="stat-foot">Total líquido</div></div>
+  <div class="stat-card accent-green"><div class="stat-label">Comissão</div><div class="stat-value">R$ {{ '%.2f'|format(total_commission or 0) }}</div><div class="stat-foot">Prevista no período</div></div>
+  <div class="stat-card accent-orange"><div class="stat-label">Estoque crítico</div><div class="stat-value">{{ low_stock_count + out_stock_count }}</div><div class="stat-foot">Baixo ou zerado</div></div>
+  <div class="stat-card accent-purple"><div class="stat-label">Valor em estoque</div><div class="stat-value">R$ {{ '%.2f'|format(inventory_value or 0) }}</div><div class="stat-foot">Preço x saldo</div></div>
+</section>
+
+<section class="content-grid two-cols">
+  <div class="panel-card production-panel">
+    <div class="panel-head"><div><h2>Prioridades da operação</h2><p>Alertas práticos para a empresa ativa</p></div><span class="status-pill">Ao vivo</span></div>
+    <div class="operation-list">
+      <a class="operation-item danger-soft" href="/produtos"><strong>{{ out_stock_count }} produto(s) zerado(s)</strong><span>Revise antes de liberar novos pedidos.</span></a>
+      <a class="operation-item warning-soft" href="/produtos"><strong>{{ low_stock_count }} produto(s) com baixo estoque</strong><span>Priorize reposição e negociação comercial.</span></a>
+      <a class="operation-item blue-soft" href="/pedidos"><strong>{{ approval_count }} pedido(s) em aprovação</strong><span>Evite atraso no fechamento de vendas.</span></a>
+      <a class="operation-item green-soft" href="/pedidos/novo"><strong>Novo pedido comercial</strong><span>Inicie uma venda já vinculada à empresa ativa.</span></a>
+    </div>
+  </div>
+
+  <div class="panel-card production-panel">
+    <div class="panel-head"><div><h2>Produtos para reposição</h2><p>Itens críticos por saldo</p></div><a href="/produtos" class="btn btn-light btn-sm">Catálogo</a></div>
+    <div class="ranking-list clean-ranking">
+      {% for p in low_stock_products %}
+      <div class="ranking-row"><div><strong>{{ p.code }} — {{ p.name }}</strong><span>{{ p.category or 'Sem categoria' }} • R$ {{ '%.2f'|format(p.price_table or 0) }}</span></div><b>{{ p.stock|int }}</b></div>
+      {% else %}<div class="info-banner">Nenhum produto em situação crítica de estoque.</div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="content-grid two-cols">
+  <div class="panel-card production-panel">
+    <div class="panel-head"><div><h2>Top produtos vendidos</h2><p>Ranking por faturamento</p></div></div>
+    <div class="ranking-list clean-ranking">
+      {% for name,total,qty in top_products %}
+      <div class="ranking-row"><div><strong>{{ loop.index }}. {{ name }}</strong><span>{{ qty|int }} unidade(s)</span></div><b>R$ {{ '%.2f'|format(total or 0) }}</b></div>
+      {% else %}<div class="info-banner">Ainda não há vendas suficientes para formar ranking.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="panel-card production-panel">
+    <div class="panel-head"><div><h2>Clientes que mais compram</h2><p>Ranking por valor líquido</p></div></div>
+    <div class="ranking-list clean-ranking">
+      {% for name,total,orders in top_customers %}
+      <div class="ranking-row"><div><strong>{{ loop.index }}. {{ name }}</strong><span>{{ orders }} pedido(s)</span></div><b>R$ {{ '%.2f'|format(total or 0) }}</b></div>
+      {% else %}<div class="info-banner">Crie pedidos para visualizar os melhores clientes.</div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="content-grid two-cols">
+  <div class="panel-card production-panel">
+    <div class="panel-head"><div><h2>Ranking de vendedores</h2><p>Faturamento e comissão prevista</p></div></div>
+    <div class="ranking-list clean-ranking">
+      {% for name,total,commission,orders in top_sellers %}
+      <div class="ranking-row"><div><strong>{{ loop.index }}. {{ name }}</strong><span>{{ orders }} pedido(s) • Comissão R$ {{ '%.2f'|format(commission or 0) }}</span></div><b>R$ {{ '%.2f'|format(total or 0) }}</b></div>
+      {% else %}<div class="info-banner">Ainda não há pedidos com vendedor para formar ranking.</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="panel-card production-panel">
+    <div class="panel-head"><div><h2>Pedidos recentes</h2><p>Últimos lançamentos</p></div><a href="/pedidos" class="btn btn-light btn-sm">Ver todos</a></div>
+    <div class="order-list compact-orders clean-orders">
+      {% for order in recent_orders %}
+      <div class="order-card">
+        <div>
+          <div class="actions-inline"><span class="badge badge-{{ order.status }}">{{ order.status|replace('_',' ')|title }}</span><span class="badge">{{ order.seller.name if order.seller else 'Sem vendedor' }}</span></div>
+          <h3>#{{ order.id }} — {{ order.customer.name if order.customer else 'Cliente não informado' }}</h3>
+          <p>{{ order.payment_condition or 'Sem condição' }} • {{ order.delivery_location or 'Entrega não informada' }}</p>
+        </div>
+        <div class="order-money">R$ {{ '%.2f'|format(order.total_net or 0) }}</div>
+      </div>
+      {% else %}<div class="info-banner">Nenhum pedido encontrado. Comece criando o primeiro pedido comercial.</div>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

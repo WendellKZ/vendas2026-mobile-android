@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{const s=document.getElementById('clientSelect');const a=document.getElementById('deliveryAddress');if(s&&a){s.addEventListener('change',async()=>{if(!s.value)return;const r=await fetch(`/api/clientes/${s.value}/endereco`);const d=await r.json();if(!a.value)a.value=d.delivery_address||'';});}});

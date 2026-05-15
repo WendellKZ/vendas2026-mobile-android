@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="topbar">
+  <div class="page-title">
+    <h1>Painel comercial</h1>
+    <p>Visão executiva das vendas, pedidos e operação comercial.</p>
+  </div>
+  <div class="actions">
+    <a class="btn secondary" href="/docs">API</a>
+    <a class="btn" href="/pedidos/novo">Criar pedido</a>
+  </div>
+</div>
+<div class="grid cards">
+  <div class="card"><h3>Vendas líquidas</h3><div class="metric">R$ {{ net_sales|money }}</div><div class="muted">Pedidos aprovados e em aprovação</div></div>
+  <div class="card"><h3>Pedidos</h3><div class="metric">{{ total_orders }}</div><div class="muted">Total cadastrado no ERP</div></div>
+  <div class="card"><h3>Clientes</h3><div class="metric">{{ total_customers }}</div><div class="muted">Base comercial ativa</div></div>
+  <div class="card"><h3>Aprovação pendente</h3><div class="metric">{{ pending_approval }}</div><div class="muted">Pedidos acima da alçada</div></div>
+</div>
+<div class="row-2" style="margin-top:18px;">
+  <div class="card">
+    <div class="section-title"><h2>Pedidos recentes</h2><span class="muted">Últimos lançamentos</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Status</th><th>Total</th></tr></thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.customer.name }}</td>
+            <td>{{ order.seller.name }}</td>
+            <td><span class="badge {{ order.status }}">{{ order.status|status_label }}</span></td>
+            <td>R$ {{ order.net_total|money }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5"><div class="empty">Nenhum pedido criado ainda.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title"><h2>Resumo rápido</h2></div>
+    <p><strong>Vendedores:</strong> {{ total_sellers }}</p>
+    <p><strong>Produtos:</strong> {{ total_products }}</p>
+    <p><strong>Aprovados:</strong> {{ by_status.get('aprovado', 0) }}</p>
+    <p><strong>Em aprovação:</strong> {{ by_status.get('em_aprovacao', 0) }}</p>
+    <p><strong>Rascunho:</strong> {{ by_status.get('rascunho', 0) }}</p>
+    <div class="section-title" style="margin-top:18px;"><h2>Estoque baixo</h2></div>
+    {% for stock in low_stock %}
+      <div class="low-stock"><span>{{ stock.product.name }}</span><strong>{{ stock.quantity|money }}</strong></div>
+    {% else %}
+      <div class="empty">Nenhum alerta de estoque baixo.</div>
+    {% endfor %}
+  </div>
+</div>
+<div class="footer-note">Porta padrão deste projeto: <span class="kbd">5098</span>. Banco PostgreSQL exposto em <span class="kbd">5434</span>.</div>
+{% endblock %}

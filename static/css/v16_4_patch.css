@@ -1,0 +1,133 @@
+
+/* V16.4 - Correção ícones do menu + agente de pedidos */
+.side-nav .nav-icon{
+  width:22px;
+  height:22px;
+  min-width:22px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:inherit;
+}
+
+.side-nav .nav-icon svg{
+  width:16px;
+  height:16px;
+  fill:currentColor;
+  display:block;
+}
+
+.agent-fab{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  width:58px;
+  height:58px;
+  border:none;
+  border-radius:18px;
+  background:linear-gradient(135deg,#2f6fed,#1fb6d9);
+  color:white;
+  box-shadow:0 18px 34px rgba(47,111,237,.28);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+  transition:.18s ease;
+}
+
+.agent-fab:hover{
+  transform:translateY(-2px);
+  box-shadow:0 22px 42px rgba(47,111,237,.32);
+}
+
+.agent-fab span{
+  font-size:25px;
+}
+
+.agent-panel{
+  position:fixed;
+  right:24px;
+  bottom:94px;
+  width:330px;
+  max-width:calc(100vw - 32px);
+  background:#fff;
+  border:1px solid var(--line,#e5eaf2);
+  border-radius:20px;
+  box-shadow:0 24px 60px rgba(15,23,42,.18);
+  z-index:999;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(10px) scale(.98);
+  transition:.18s ease;
+  overflow:hidden;
+}
+
+.agent-panel.open{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0) scale(1);
+}
+
+.agent-head{
+  padding:16px;
+  background:linear-gradient(135deg,#f4f8ff,#ffffff);
+  border-bottom:1px solid var(--line,#e5eaf2);
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.agent-head strong{
+  display:block;
+  font-size:15px;
+  color:var(--text,#172033);
+}
+
+.agent-head small{
+  display:block;
+  color:var(--muted,#68758a);
+  font-size:12px;
+  margin-top:2px;
+}
+
+.agent-head button{
+  border:none;
+  background:#fff;
+  border:1px solid var(--line,#e5eaf2);
+  width:28px;
+  height:28px;
+  border-radius:9px;
+  cursor:pointer;
+  color:#64748b;
+  font-size:18px;
+  line-height:1;
+}
+
+.agent-body{
+  padding:16px;
+}
+
+.agent-body p{
+  margin:0 0 14px;
+  color:var(--muted,#68758a);
+  line-height:1.45;
+}
+
+.agent-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+@media(max-width:720px){
+  .agent-fab{
+    right:16px;
+    bottom:16px;
+  }
+  .agent-panel{
+    right:16px;
+    bottom:84px;
+  }
+}

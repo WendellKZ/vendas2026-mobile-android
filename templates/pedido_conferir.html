@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Conferência do pedido #{{ order.id }}</h2>
+      <p>Revise dados comerciais, itens, totais e regra de aprovação antes de integrar ao ERP.</p>
+    </div>
+    <span class="badge badge-{{ order.status }}">{{ order.status|replace('_',' ')|title }}</span>
+  </div>
+  {% if order.status in ['em_aprovacao','em_aprovacao_gestor','em_aprovacao_admin'] %}
+  <div class="approval-alert inline-alert" style="display:block;margin-bottom:16px;">⚠️ Este pedido possui desconto acima de {{ discount_limit or 10 }}% e precisa de aprovação comercial antes da integração.</div>
+  {% endif %}
+  <div class="summary-grid">
+    <div class="summary-tile"><span>Cliente</span><strong>{{ order.customer.name if order.customer else '-' }}</strong></div>
+    <div class="summary-tile"><span>Vendedor</span><strong>{{ order.seller.name if order.seller else '-' }}</strong></div>
+    <div class="summary-tile"><span>Entrega</span><strong>{{ order.delivery_location or '-' }}</strong></div>
+    <div class="summary-tile"><span>Pagamento</span><strong>{{ order.payment_condition or '-' }}</strong></div>
+  </div>
+</section>
+
+<section class="panel-card">
+  <div class="panel-head"><div><h2>Itens</h2><p>Produtos inseridos no pedido</p></div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Produto</th><th>Qtd</th><th>Unitário</th><th>Desconto</th><th>Total</th></tr></thead>
+      <tbody>
+        {% for item in order.items %}
+        <tr>
+          <td>{{ item.product.name if item.product else 'Produto' }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>R$ {{ '%.2f'|format(item.unit_price) }}</td>
+          <td>{{ '%.2f'|format(item.discount) }}%</td>
+          <td><strong>R$ {{ '%.2f'|format(item.total) }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<aside class="summary-card checkout-summary">
+  <div class="summary-row"><span>Total bruto</span><strong>R$ {{ '%.2f'|format(order.total_gross) }}</strong></div>
+  <div class="summary-row"><span>Desconto</span><strong>R$ {{ '%.2f'|format(order.total_discount) }}</strong></div>
+  <div class="summary-row total"><span>Total líquido</span><strong>R$ {{ '%.2f'|format(order.total_net) }}</strong></div>
+  <div class="summary-row"><span>Comissão</span><strong>R$ {{ '%.2f'|format(order.commission_total or 0) }} ({{ '%.2f'|format(order.commission_percent or 0) }}%)</strong></div>
+  <div class="summary-row"><span>Regra aplicada</span><strong>{{ order.rule_summary or '-' }}</strong></div>
+  <div class="actions" style="margin-top:16px;">
+    <a href="/pedidos" class="btn btn-light">Voltar</a>
+    {% if order.status == 'em_orcamento' %}<form method="post" action="/pedidos/integrar/{{ order.id }}"><button class="btn btn-primary">Integrar ERP</button></form>{% endif %}
+    {% if order.status in ['em_aprovacao','em_aprovacao_gestor','em_aprovacao_admin'] %}<form method="post" action="/pedidos/aprovar/{{ order.id }}"><button class="btn btn-success">Aprovar pedido</button></form>{% endif %}
+  </div>
+</aside>
+{% endblock %}

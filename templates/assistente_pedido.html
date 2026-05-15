@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .assistant-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(135deg,#0f1f46,#1d4ed8 72%,#06b6d4);color:#fff;overflow:hidden;position:relative}.assistant-hero h2{font-size:34px;margin:10px 0 8px;letter-spacing:-.04em}.assistant-hero p{max-width:760px;color:#dbeafe}.assistant-score{width:128px;height:128px;border-radius:34px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto}.assistant-score strong{font-size:32px}.assistant-score span{font-size:12px;color:#dbeafe;font-weight:800}.assistant-layout{display:grid;grid-template-columns:230px minmax(0,1fr) 340px;gap:18px;align-items:start}.assistant-steps,.assistant-cart{position:sticky;top:24px}.assistant-step-pill{width:100%;border:1px solid #d9e2ef;background:#fff;border-radius:17px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:10px;text-align:left;cursor:pointer;color:#0f172a;font-weight:900}.assistant-step-pill b{width:34px;height:34px;border-radius:12px;background:#eef2ff;color:#1d4ed8;display:flex;align-items:center;justify-content:center}.assistant-step-pill.active{background:#10235a;color:#fff;border-color:#10235a;box-shadow:0 14px 35px rgba(15,23,42,.13)}.assistant-step-pill.active b{background:#fff;color:#1d4ed8}.assistant-step{display:none!important}.assistant-step.active{display:block!important}.bot-message{display:flex;gap:14px;align-items:flex-start;border:1px solid #dbeafe;background:linear-gradient(180deg,#f8fbff,#eef5ff);border-radius:20px;padding:16px;margin-bottom:16px}.bot-avatar{width:46px;height:46px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 14px 35px rgba(15,23,42,.13);flex:0 0 auto}.bot-message strong{font-size:19px}.bot-message p{margin:5px 0 0}.assistant-search{width:100%;min-height:52px;font-size:16px;margin-bottom:14px;border:1px solid #d9e2ef;border-radius:16px;padding:0 14px}.assistant-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:470px;overflow:auto;padding-right:4px}.assistant-options.compact{grid-template-columns:repeat(3,minmax(0,1fr));max-height:none}.option-card{border:1px solid #d9e2ef;background:#fff;border-radius:18px;padding:16px;text-align:left;cursor:pointer;box-shadow:0 14px 35px rgba(15,23,42,.08);transition:.16s ease;color:#0f172a}.option-card:hover{transform:translateY(-2px);border-color:#93c5fd}.option-card.selected{border-color:#1d4ed8;box-shadow:0 0 0 4px rgba(37,99,235,.12);background:#f8fbff}.option-card strong{display:block;font-size:16px}.option-card span{display:block;color:#64748b;font-size:12px;margin-top:5px}.assistant-product-tools{display:grid;gap:6px}.mini-hint{color:#64748b;font-size:12px;font-weight:700}.assistant-subtitle{margin:18px 0 10px}.assistant-suggestions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.suggestion-chip{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}.product-assistant-grid{display:grid;gap:10px;max-height:560px;overflow:auto;padding-right:4px}.assistant-product-card{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid #d9e2ef;border-radius:18px;background:#fff;padding:12px;box-shadow:0 14px 35px rgba(15,23,42,.08)}.assistant-product-card strong{display:block}.assistant-product-card span{display:block;color:#64748b;font-size:12px;margin-top:3px}.assistant-product-card b{display:block;margin-top:5px}.assistant-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid #d9e2ef;margin-top:18px;padding-top:16px}.assistant-nav-right{display:flex;gap:10px;align-items:center}.nav-budget-btn{display:none}.nav-budget-btn.show{display:inline-flex}.cart-resume-line{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #d9e2ef;padding:10px 0}.cart-resume-line span{color:#64748b;font-size:12px;font-weight:900;text-transform:uppercase}.cart-resume-line strong{text-align:right}.assistant-cart h3{margin:8px 0 12px}.assistant-cart-items{display:grid;gap:10px;margin:14px 0;max-height:390px;overflow:auto}.assistant-cart-item{border:1px solid #d9e2ef;border-radius:16px;padding:12px;background:#fff}.assistant-cart-item strong,.assistant-cart-item span,.assistant-cart-item b{display:block}.assistant-cart-item span{color:#64748b;font-size:12px;margin-top:2px}.discount-unit{display:inline-flex!important;align-items:center;gap:4px;margin-top:8px;padding:7px 9px;border-radius:12px;background:#fff7ed;color:#c2410c!important;font-size:12px!important;font-weight:900}.cart-line-total{display:flex!important;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-weight:900}.cart-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin:10px 0}.cart-controls label{font-size:10px}.cart-controls input{min-height:36px;border-radius:11px;border:1px solid #d9e2ef;padding:0 8px}.cart-controls button{border:none;border-radius:11px;background:#fee2e2;color:#991b1b;font-weight:900;padding:7px 9px;cursor:pointer}.review-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.review-grid div,.final-card,.review-item{border:1px solid #d9e2ef;border-radius:17px;background:#fff;padding:14px}.review-grid span,.review-item span{display:block;color:#64748b;font-size:12px;font-weight:800}.review-grid strong,.review-item strong{display:block;margin-top:4px}.review-item{margin-bottom:9px}.final-card{background:linear-gradient(180deg,#fff,#f8fbff)}.btn.full-btn{width:100%;justify-content:center;margin-top:10px}.assistant-final-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}.btn-budget{background:#fff7ed!important;color:#9a3412!important;border:1px solid #fed7aa!important}.btn-budget:hover{background:#ffedd5!important}.step-complete-note{margin:12px 0;padding:12px 14px;border-radius:16px;background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46;font-weight:800;display:none}.step-complete-note.show{display:block}
+  @media(max-width:1250px){.assistant-layout{grid-template-columns:1fr}.assistant-steps,.assistant-cart{position:relative;top:auto}.assistant-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.assistant-step-pill{margin:0}.assistant-cart{order:3}.assistant-chat{order:2}.review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:760px){.assistant-hero{flex-direction:column;align-items:flex-start}.assistant-score{width:100%;height:auto;min-height:82px;border-radius:20px}.assistant-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.assistant-options,.assistant-options.compact{grid-template-columns:1fr}.assistant-product-card{grid-template-columns:1fr}.cart-controls{grid-template-columns:1fr 1fr}.cart-controls button{grid-column:1/-1}.review-grid{grid-template-columns:1fr}.assistant-nav{align-items:stretch}.assistant-nav-right{flex:1;display:grid;grid-template-columns:1fr;gap:8px}.assistant-nav .btn{justify-content:center}.assistant-hero h2{font-size:27px}}
+
+  .ai-smart-panel{border:1px solid #bfdbfe;background:linear-gradient(180deg,#eff6ff,#fff);border-radius:22px;padding:16px;margin-bottom:18px}
+  .ai-smart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.ai-smart-head h3{margin:0;font-size:20px}.ai-smart-head p{margin:4px 0 0;color:#475569}
+  .ai-chat-row{display:grid;grid-template-columns:1fr auto auto;gap:8px}.ai-chat-row input{min-height:48px;border:1px solid #cbd5e1;border-radius:15px;padding:0 14px;font-size:15px}
+  .ai-memory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.ai-memory-card{background:#fff;border:1px solid #dbeafe;border-radius:16px;padding:12px}.ai-memory-card span{display:block;color:#64748b;font-size:11px;text-transform:uppercase;font-weight:900}.ai-memory-card strong{display:block;margin-top:4px}
+  .ai-response{margin-top:10px;padding:12px 14px;border-radius:16px;background:#0f172a;color:#e2e8f0;display:none}.ai-response.show{display:block}
+  .smart-suggestion-box{border:1px dashed #93c5fd;background:#f8fbff;border-radius:18px;padding:12px;margin:10px 0}.smart-suggestion-box h4{margin:0 0 8px}.smart-actions{display:flex;gap:8px;flex-wrap:wrap}.smart-chip{border:none;background:#dbeafe;color:#1e3a8a;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}
+  .voice-on{animation:pulseVoice 1s infinite}@keyframes pulseVoice{0%{box-shadow:0 0 0 0 rgba(37,99,235,.35)}100%{box-shadow:0 0 0 12px rgba(37,99,235,0)}}
+  @media(max-width:760px){.ai-chat-row{grid-template-columns:1fr}.ai-memory-grid{grid-template-columns:1fr}}
+</style>
+
+<section class="assistant-hero panel-card">
+  <div>
+    <span class="tag">V18 • Pedido rápido</span>
+    <h2>Pedido guiado</h2>
+    <p>Fluxo comercial orientado para montar pedidos com rapidez, padronização e menos erros operacionais.</p>
+  </div>
+  <div class="assistant-score"><strong id="assistProgress">1/6</strong><span>etapa atual</span></div>
+</section>
+
+<form id="assistantForm" method="post" action="/assistente-pedido/finalizar" class="assistant-layout">
+  <aside class="assistant-steps panel-card">
+    <button type="button" class="assistant-step-pill active" data-go="0"><b>1</b><span>Cliente</span></button>
+    <button type="button" class="assistant-step-pill" data-go="1"><b>2</b><span>Pagamento</span></button>
+    <button type="button" class="assistant-step-pill" data-go="2"><b>3</b><span>Transportadora</span></button>
+    <button type="button" class="assistant-step-pill" data-go="3"><b>4</b><span>Produtos</span></button>
+    <button type="button" class="assistant-step-pill" data-go="4"><b>5</b><span>Conferência</span></button>
+    <button type="button" class="assistant-step-pill" data-go="5"><b>6</b><span>Enviar</span></button>
+  </aside>
+
+  <main class="assistant-chat panel-card">
+
+    <div class="ai-smart-panel">
+      <div class="ai-smart-head">
+        <div>
+          <span class="tag">IA simulada adaptativa</span>
+          <h3>Preferências comerciais do {{ current_user.name }}</h3>
+          <p>Ela aprende com o histórico real do vendedor e também guarda preferências locais deste navegador.</p>
+        </div>
+        <button type="button" class="btn btn-light" id="resetAiMemory">Limpar aprendizado local</button>
+      </div>
+      <div class="ai-chat-row">
+        <input type="text" id="aiCommand" placeholder='Ex: cliente Loja Sol, pagamento 28 dias, transportadora Jaja, 10 do produto carrinho'>
+        <button type="button" class="btn btn-primary" id="aiInterpret">Interpretar</button>
+        <button type="button" class="btn btn-light" id="voiceBtn">🎤 Falar</button>
+      </div>
+      <div class="ai-response" id="aiResponse"></div>
+      <div class="ai-memory-grid">
+        <div class="ai-memory-card"><span>Pagamento mais provável</span><strong id="aiPaymentHint">{{ assistant_memory.preferred_payment }}</strong></div>
+        <div class="ai-memory-card"><span>Transportadora provável</span><strong id="aiCarrierHint">{{ assistant_memory.preferred_carrier_name }}</strong></div>
+        <div class="ai-memory-card"><span>Produtos/clientes</span><strong>Aprende a cada pedido</strong></div>
+      </div>
+    </div>
+    <section class="assistant-step active" data-step="0">
+      <div class="bot-message"><div class="bot-avatar">🧭</div><div><strong>Vamos começar pelo cliente.</strong><p>Digite parte do nome, cidade ou documento. Depois toque no cliente correto. O fluxo já vai avançar para pagamento.</p></div></div>
+      <input class="assistant-search" type="search" id="customerSearch" placeholder="Buscar cliente...">
+
+      {% if assistant_memory.favorite_customers %}
+      <div class="smart-suggestion-box">
+        <h4>Clientes que este vendedor mais usa</h4>
+        <div class="smart-actions">
+          {% for c in assistant_memory.favorite_customers %}
+          <button type="button" class="smart-chip smart-customer" data-customer-id="{{ c.id }}">{{ c.name }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="assistant-options" id="customerOptions">
+        {% for c in customers %}
+        <button type="button" class="option-card customer-option" data-id="{{ c.id }}" data-name="{{ c.name }}" data-city="{{ c.city or '' }}" data-delivery="{{ c.delivery_location or '' }}" data-text="{{ (c.name ~ ' ' ~ (c.city or '') ~ ' ' ~ (c.document or ''))|lower }}">
+          <strong>{{ c.name }}</strong><span>{{ c.city or 'Cidade não informada' }}{% if c.document %} • {{ c.document }}{% endif %}</span>
+        </button>
+        {% endfor %}
+      </div>
+      <div class="step-complete-note" id="customerNote">Cliente selecionado. Indo para pagamento...</div>
+      <input type="hidden" name="customer_id" id="customerId" required>
+    </section>
+
+    <section class="assistant-step" data-step="1">
+      <div class="bot-message"><div class="bot-avatar">💳</div><div><strong>Agora escolha a condição de pagamento.</strong><p>Toque em uma condição. O fluxo vai avançar para transportadora automaticamente.</p></div></div>
+
+      <div class="smart-suggestion-box">
+        <h4>Preferência aprendida</h4>
+        <div class="smart-actions">
+          <button type="button" class="smart-chip" id="applyPreferredPayment">Usar {{ assistant_memory.preferred_payment }}</button>
+        </div>
+      </div>
+      <div class="assistant-options compact">
+        {% for p in payment_options %}
+        <button type="button" class="option-card payment-option" data-value="{{ p }}"><strong>{{ p }}</strong><span>Selecionar condição</span></button>
+        {% endfor %}
+      </div>
+      <div class="step-complete-note" id="paymentNote">Pagamento selecionado. Indo para transportadora...</div>
+      <input type="hidden" name="payment_condition" id="paymentCondition" value="28 dias">
+    </section>
+
+    <section class="assistant-step" data-step="2">
+      <div class="bot-message"><div class="bot-avatar">🚚</div><div><strong>Escolha a transportadora.</strong><p>Você também pode tocar em “Definir depois”. O fluxo vai avançar para produtos.</p></div></div>
+      <input class="assistant-search" type="search" id="carrierSearch" placeholder="Buscar transportadora...">
+
+      <div class="smart-suggestion-box">
+        <h4>Transportadora provável</h4>
+        <div class="smart-actions">
+          <button type="button" class="smart-chip" id="applyPreferredCarrier" data-carrier-id="{{ assistant_memory.preferred_carrier_id }}">{{ assistant_memory.preferred_carrier_name }}</button>
+        </div>
+      </div>
+      <div class="assistant-options" id="carrierOptions">
+        <button type="button" class="option-card carrier-option" data-id="" data-name="Definir depois" data-text="sem transportadora definir depois"><strong>Definir depois</strong><span>Continuar sem transportadora</span></button>
+        {% for c in carriers %}
+        <button type="button" class="option-card carrier-option" data-id="{{ c.id }}" data-name="{{ c.name }}" data-text="{{ (c.name ~ ' ' ~ (c.city or ''))|lower }}"><strong>{{ c.name }}</strong><span>{{ c.city or 'Cidade não informada' }}</span></button>
+        {% endfor %}
+      </div>
+      <div class="step-complete-note" id="carrierNote">Transportadora selecionada. Indo para produtos...</div>
+      <input type="hidden" name="carrier_id" id="carrierId">
+      <input type="hidden" name="delivery_location" id="deliveryLocation">
+      <input type="hidden" name="seller_id" value="{{ current_user.id }}">
+    </section>
+
+    <section class="assistant-step" data-step="3">
+      <div class="bot-message"><div class="bot-avatar">📦</div><div><strong>Vamos adicionar produtos.</strong><p>Busque pelo nome/código, toque em “Adicionar” e ajuste quantidade/desconto no carrinho. Quando terminar, toque em “Conferir pedido”.</p></div></div>
+      <div class="assistant-product-tools">
+        <input class="assistant-search" type="search" id="productSearch" placeholder="Buscar produto por nome, código ou categoria...">
+        <div class="mini-hint">Dica: o representante pode adicionar vários produtos antes de seguir.</div>
+      </div>
+      <h3 class="assistant-subtitle">Sugestões rápidas</h3>
+      <div class="assistant-suggestions">
+        {% for p in top_products %}<button type="button" class="suggestion-chip" data-product-id="{{ p.id }}">{{ p.name }}</button>{% endfor %}
+      </div>
+      <div class="product-assistant-grid" id="productOptions">
+        {% for p in products %}
+        <div class="assistant-product-card" data-product-card data-id="{{ p.id }}" data-code="{{ p.code }}" data-name="{{ p.name }}" data-price="{{ '%.2f'|format(p.price_table or 0) }}" data-stock="{{ p.stock or 0 }}" data-unit="{{ p.unit or 'UN' }}" data-text="{{ (p.code ~ ' ' ~ p.name ~ ' ' ~ (p.category or ''))|lower }}">
+          <div class="catalog-thumb">{{ (p.name or 'P')[:2].upper() }}</div>
+          <div><strong>{{ p.name }}</strong><span>{{ p.code }} • Estoque {{ p.stock or 0 }} {{ p.unit or 'UN' }}</span><b>R$ {{ '%.2f'|format(p.price_table or 0) }}</b></div>
+          <button type="button" class="btn btn-primary btn-sm add-product-btn">Adicionar</button>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="hiddenItems"></div>
+    </section>
+
+    <section class="assistant-step" data-step="4">
+      <div class="bot-message"><div class="bot-avatar">✅</div><div><strong>Conferência do pedido.</strong><p>Confira cliente, pagamento, transportadora e itens antes de enviar.</p></div></div>
+      <div class="assistant-review" id="reviewBox"></div>
+    </section>
+
+    <section class="assistant-step" data-step="5">
+      <div class="bot-message"><div class="bot-avatar">🚀</div><div><strong>Pedido pronto.</strong><p>Você pode manter como orçamento para negociar depois ou enviar para conferência aplicando as regras comerciais automaticamente.</p></div></div>
+      <div class="final-card">
+        <h3>Resumo final</h3>
+        <div id="finalSummary"></div>
+        <input type="hidden" name="assistant_action" id="assistantAction" value="finalizar">
+        <div class="assistant-final-actions">
+          <button type="submit" class="btn btn-light full-btn btn-budget" id="keepBudgetBtn" data-action="orcamento">Manter como orçamento</button>
+          <button type="submit" class="btn btn-success full-btn" id="submitAssistant" data-action="finalizar">Enviar pedido para conferência</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="assistant-nav">
+      <button type="button" class="btn btn-light" id="prevStep">Voltar</button>
+      <div class="assistant-nav-right">
+        <button type="submit" class="btn btn-light btn-budget nav-budget-btn" id="navBudgetBtn" data-action="orcamento">Manter como orçamento</button>
+        <button type="button" class="btn btn-primary" id="nextStep">Continuar</button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="assistant-cart panel-card">
+    <span class="tag">Carrinho do pedido</span><h3>Pedido em montagem</h3>
+    <div class="cart-resume-line"><span>Cliente</span><strong id="cartCustomer">Não escolhido</strong></div>
+    <div class="cart-resume-line"><span>Pagamento</span><strong id="cartPayment">28 dias</strong></div>
+    <div class="cart-resume-line"><span>Transportadora</span><strong id="cartCarrier">Definir depois</strong></div>
+    <div class="assistant-cart-items" id="cartItems"><p class="empty-items">Nenhum produto adicionado ainda.</p></div>
+    <div class="summary-row"><span>Itens</span><strong id="cartQty">0</strong></div>
+    <div class="summary-row"><span>Total bruto</span><strong id="cartGross">R$ 0,00</strong></div>
+    <div class="summary-row"><span>Desconto</span><strong id="cartDiscount">R$ 0,00</strong></div>
+    <div class="summary-row total"><span>Total</span><strong id="cartTotal">R$ 0,00</strong></div>
+  </aside>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const steps = Array.from(document.querySelectorAll('.assistant-step'));
+  const pills = Array.from(document.querySelectorAll('.assistant-step-pill'));
+  const progress = document.getElementById('assistProgress');
+  const prevBtn = document.getElementById('prevStep');
+  const nextBtn = document.getElementById('nextStep');
+  const navBudgetBtn = document.getElementById('navBudgetBtn');
+  let current = 0;
+  let cart = [];
+  const selected = {customer:null, payment:'28 dias', carrier:{id:'', name:'Definir depois'}, delivery:''};
+  const money = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+
+  function goTo(i){
+    current = Math.max(0, Math.min(steps.length - 1, i));
+    steps.forEach((s, idx) => { s.classList.toggle('active', idx === current); s.style.display = idx === current ? 'block' : 'none'; });
+    pills.forEach((p, idx) => p.classList.toggle('active', idx === current));
+    progress.textContent = (current + 1) + '/' + steps.length;
+    prevBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
+    nextBtn.style.display = current === steps.length - 1 ? 'none' : 'inline-flex';
+    nextBtn.textContent = current === 3 ? 'Conferir pedido' : (current === 4 ? 'Ir para envio' : 'Continuar');
+    if(navBudgetBtn){ navBudgetBtn.classList.toggle('show', current === 4); }
+    if(current >= 4) renderReview();
+    document.querySelector('.assistant-chat').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function noteAndGo(noteId, target){
+    const note = document.getElementById(noteId);
+    if(note) note.classList.add('show');
+    setTimeout(() => { if(note) note.classList.remove('show'); goTo(target); }, 450);
+  }
+
+  function canContinue(){
+    if(current === 0 && !selected.customer){ alert('Escolha um cliente para continuar.'); return false; }
+    if(current === 3 && cart.length === 0){ alert('Adicione pelo menos um produto para conferir o pedido.'); return false; }
+    return true;
+  }
+
+  nextBtn.addEventListener('click', () => { if(canContinue()) goTo(current + 1); });
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  pills.forEach(p => p.addEventListener('click', () => { const target = Number(p.dataset.go); if(target <= current || canContinue()) goTo(target); }));
+
+  function filter(input, selector){
+    const q = (input.value || '').toLowerCase().trim();
+    document.querySelectorAll(selector).forEach(el => { el.style.display = ((el.dataset.text || '').includes(q)) ? '' : 'none'; });
+  }
+  document.getElementById('customerSearch').addEventListener('input', e => filter(e.target, '.customer-option'));
+  document.getElementById('carrierSearch').addEventListener('input', e => filter(e.target, '.carrier-option'));
+  document.getElementById('productSearch').addEventListener('input', e => filter(e.target, '[data-product-card]'));
+
+  document.querySelectorAll('.customer-option').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.customer-option').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selected.customer = {id: btn.dataset.id, name: btn.dataset.name, city: btn.dataset.city};
+    selected.delivery = btn.dataset.delivery || '';
+    document.getElementById('customerId').value = selected.customer.id;
+    document.getElementById('deliveryLocation').value = selected.delivery;
+    document.getElementById('cartCustomer').textContent = selected.customer.name;
+    learn('customer', selected.customer.id, selected.customer.name);
+    noteAndGo('customerNote', 1);
+  }));
+
+  document.querySelectorAll('.payment-option').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.payment-option').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selected.payment = btn.dataset.value;
+    document.getElementById('paymentCondition').value = selected.payment;
+    document.getElementById('cartPayment').textContent = selected.payment;
+    learn('payment', selected.payment, selected.payment);
+    noteAndGo('paymentNote', 2);
+  }));
+
+  document.querySelectorAll('.carrier-option').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.carrier-option').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selected.carrier = {id: btn.dataset.id || '', name: btn.dataset.name || 'Definir depois'};
+    document.getElementById('carrierId').value = selected.carrier.id;
+    document.getElementById('cartCarrier').textContent = selected.carrier.name;
+    learn('carrier', selected.carrier.id, selected.carrier.name);
+    noteAndGo('carrierNote', 3);
+  }));
+
+  function addProduct(card){
+    const id = card.dataset.id;
+    let item = cart.find(i => i.id === id);
+    if(item){ item.qty += 1; }
+    else { cart.push({id, code: card.dataset.code, name: card.dataset.name, price: Number(card.dataset.price || 0), stock: card.dataset.stock, unit: card.dataset.unit, qty: 1, discount: 0}); }
+    learn('product', id, item ? item.name : card.dataset.name);
+    renderCart();
+  }
+  document.querySelectorAll('.add-product-btn').forEach(btn => btn.addEventListener('click', () => addProduct(btn.closest('[data-product-card]'))));
+  document.querySelectorAll('.suggestion-chip').forEach(btn => btn.addEventListener('click', () => {
+    const card = document.querySelector(`[data-product-card][data-id="${btn.dataset.productId}"]`);
+    if(card){ addProduct(card); card.scrollIntoView({behavior:'smooth', block:'center'}); }
+  }));
+
+  function renderCart(){
+    const box = document.getElementById('cartItems');
+    const hidden = document.getElementById('hiddenItems');
+    box.innerHTML = '';
+    hidden.innerHTML = '';
+    if(!cart.length){ box.innerHTML = '<p class="empty-items">Nenhum produto adicionado ainda.</p>'; }
+    cart.forEach((item, idx) => {
+      const lineGross = item.price * item.qty;
+      const unitDiscount = item.price * (item.discount / 100);
+      const lineDiscount = lineGross * (item.discount / 100);
+      const lineTotal = lineGross - lineDiscount;
+      const row = document.createElement('div');
+      row.className = 'assistant-cart-item';
+      row.innerHTML = `<strong>${item.name}</strong><span>${item.code} • ${money(item.price)} • ${item.unit}</span><div class="cart-controls"><label>Qtd<input type="number" min="1" value="${item.qty}" data-qty="${idx}"></label><label>Desc %<input type="number" min="0" max="99" step="0.1" value="${item.discount}" data-disc="${idx}"></label><button type="button" data-remove="${idx}">Remover</button></div><span class="discount-unit">Desconto unitário: ${money(unitDiscount)} (${item.discount}%)</span><div class="cart-line-total"><span>Total do item</span><b>${money(lineTotal)}</b></div>`;
+      box.appendChild(row);
+      hidden.insertAdjacentHTML('beforeend', `<input type="hidden" name="product_id" value="${item.id}"><input type="hidden" name="quantity" value="${item.qty}"><input type="hidden" name="discount" value="${item.discount}">`);
+    });
+    box.querySelectorAll('[data-qty]').forEach(i => i.addEventListener('input', () => { cart[Number(i.dataset.qty)].qty = Math.max(1, Number(i.value || 1)); renderCart(); }));
+    box.querySelectorAll('[data-disc]').forEach(i => i.addEventListener('input', () => { cart[Number(i.dataset.disc)].discount = Math.max(0, Number(i.value || 0)); renderCart(); }));
+    box.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => { cart.splice(Number(b.dataset.remove), 1); renderCart(); }));
+    const gross = cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const disc = cart.reduce((s,i) => s + (i.price * i.qty * (i.discount / 100)), 0);
+    document.getElementById('cartQty').textContent = cart.reduce((s,i) => s + i.qty, 0);
+    document.getElementById('cartGross').textContent = money(gross);
+    document.getElementById('cartDiscount').textContent = money(disc);
+    document.getElementById('cartTotal').textContent = money(gross - disc);
+  }
+
+  function renderReview(){
+    const gross = cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const disc = cart.reduce((s,i) => s + (i.price * i.qty * (i.discount / 100)), 0);
+    const html = `<div class="review-grid"><div><span>Cliente</span><strong>${selected.customer ? selected.customer.name : '-'}</strong></div><div><span>Pagamento</span><strong>${selected.payment}</strong></div><div><span>Transportadora</span><strong>${selected.carrier.name}</strong></div><div><span>Total</span><strong>${money(gross - disc)}</strong></div></div><h3>Itens adicionados</h3>${cart.map(i => { const unitDiscount = i.price * (i.discount/100); const total = (i.price*i.qty)-(i.price*i.qty*(i.discount/100)); return `<div class="review-item"><strong>${i.name}</strong><span>Qtd ${i.qty} • Desc ${i.discount}% • desconto unitário ${money(unitDiscount)} • total ${money(total)}</span></div>`; }).join('')}`;
+    document.getElementById('reviewBox').innerHTML = html;
+    document.getElementById('finalSummary').innerHTML = html;
+  }
+
+
+  const assistantMemory = {{ assistant_memory|tojson }};
+  const memoryKey = 'vpro6_assistant_memory_' + assistantMemory.seller_id;
+  let localLearning = {};
+  try { localLearning = JSON.parse(localStorage.getItem(memoryKey) || '{}'); } catch(e){ localLearning = {}; }
+
+  function saveLocalLearning(){
+    localStorage.setItem(memoryKey, JSON.stringify(localLearning));
+  }
+
+  function learn(type, id, label){
+    if(!id && type !== 'payment' && type !== 'carrier') return;
+    localLearning[type] = localLearning[type] || {};
+    const key = String(id || label || 'default');
+    const item = localLearning[type][key] || {id:id || '', label:label || key, score:0};
+    item.score += 1;
+    item.label = label || item.label;
+    localLearning[type][key] = item;
+    saveLocalLearning();
+    refreshMemoryHints();
+  }
+
+  function bestLocal(type){
+    const data = localLearning[type] || {};
+    return Object.values(data).sort((a,b) => (b.score||0)-(a.score||0))[0] || null;
+  }
+
+  function refreshMemoryHints(){
+    const pay = bestLocal('payment');
+    const car = bestLocal('carrier');
+    if(pay) document.getElementById('aiPaymentHint').textContent = pay.label;
+    if(car) document.getElementById('aiCarrierHint').textContent = car.label;
+  }
+
+  function speakAi(message){
+    const box = document.getElementById('aiResponse');
+    box.innerHTML = message;
+    box.classList.add('show');
+  }
+
+  function normalizeText(text){
+    return (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function clickByText(selector, wanted){
+    const q = normalizeText(wanted);
+    let best = null;
+    document.querySelectorAll(selector).forEach(el => {
+      const txt = normalizeText((el.dataset.text || '') + ' ' + (el.dataset.name || '') + ' ' + el.textContent);
+      if(txt.includes(q) || q.includes(txt.slice(0, Math.min(12, txt.length)))) best = best || el;
+    });
+    if(best){ best.click(); return true; }
+    return false;
+  }
+
+  function addProductByText(fragment, qty){
+    const q = normalizeText(fragment);
+    let card = null;
+    document.querySelectorAll('[data-product-card]').forEach(el => {
+      const txt = normalizeText((el.dataset.text || '') + ' ' + el.dataset.name + ' ' + el.dataset.code);
+      if(!card && (txt.includes(q) || q.includes(normalizeText(el.dataset.name).slice(0, 8)))) card = el;
+    });
+    if(card){
+      addProduct(card);
+      const item = cart.find(i => i.id === card.dataset.id);
+      if(item && qty) item.qty = Number(qty);
+      renderCart();
+      return card.dataset.name;
+    }
+    return null;
+  }
+
+  function interpretCommand(){
+    const raw = document.getElementById('aiCommand').value.trim();
+    if(!raw){ speakAi('Digite ou fale um pedido para o fluxo interpretar.'); return; }
+    const text = normalizeText(raw);
+    let actions = [];
+
+    const customerMatch = raw.match(/cliente\s+([^,;]+)/i) || raw.match(/para\s+([^,;]+)/i);
+    if(customerMatch && clickByText('.customer-option', customerMatch[1].trim())){
+      actions.push('cliente selecionado');
+    }
+
+    const payments = Array.from(document.querySelectorAll('.payment-option')).map(b => b.dataset.value);
+    const paymentFound = payments.find(p => text.includes(normalizeText(p)));
+    if(paymentFound){
+      document.querySelector(`.payment-option[data-value="${paymentFound}"]`)?.click();
+      actions.push('pagamento definido: ' + paymentFound);
+    }
+
+    const carrierMatch = raw.match(/transportadora\s+([^,;]+)/i);
+    if(carrierMatch && clickByText('.carrier-option', carrierMatch[1].trim())){
+      actions.push('transportadora selecionada');
+    }
+
+    const productChunks = raw.split(/,|;|\be\b/gi).filter(x => /\d+/.test(x));
+    productChunks.forEach(chunk => {
+      const qtyMatch = chunk.match(/(\d+)/);
+      let name = chunk.replace(/\d+/g,'').replace(/unidades|unidade|caixas|caixa|pecas|peças|do|da|de|produto/gi,'').trim();
+      if(name.length > 2){
+        const added = addProductByText(name, qtyMatch ? qtyMatch[1] : 1);
+        if(added) actions.push('produto adicionado: ' + added);
+      }
+    });
+
+    if(actions.length){
+      speakAi('Entendi e apliquei: <strong>' + actions.join(' • ') + '</strong><br>Confira o carrinho antes de enviar.');
+      if(cart.length) goTo(3);
+    } else {
+      speakAi('Não consegui aplicar automaticamente. Tente: <strong>cliente Loja Sol, 10 do produto carrinho, pagamento 28 dias</strong>.');
+    }
+  }
+
+  document.getElementById('aiInterpret').addEventListener('click', interpretCommand);
+  document.getElementById('aiCommand').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); interpretCommand(); }});
+  document.getElementById('resetAiMemory').addEventListener('click', () => { localStorage.removeItem(memoryKey); localLearning = {}; refreshMemoryHints(); speakAi('Aprendizado local limpo para este representante neste navegador.'); });
+
+  document.getElementById('applyPreferredPayment').addEventListener('click', () => {
+    const local = bestLocal('payment');
+    const value = local ? local.label : assistantMemory.preferred_payment;
+    document.querySelector(`.payment-option[data-value="${value}"]`)?.click();
+  });
+  document.getElementById('applyPreferredCarrier').addEventListener('click', () => {
+    const local = bestLocal('carrier');
+    if(local){
+      const btn = Array.from(document.querySelectorAll('.carrier-option')).find(b => String(b.dataset.id || '') === String(local.id || '') || b.dataset.name === local.label);
+      if(btn) btn.click();
+    } else {
+      const id = String(assistantMemory.preferred_carrier_id || '');
+      const btn = Array.from(document.querySelectorAll('.carrier-option')).find(b => String(b.dataset.id || '') === id);
+      if(btn) btn.click(); else document.querySelector('.carrier-option')?.click();
+    }
+  });
+  document.querySelectorAll('.smart-customer').forEach(btn => btn.addEventListener('click', () => document.querySelector(`.customer-option[data-id="${btn.dataset.customerId}"]`)?.click()));
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const voiceBtn = document.getElementById('voiceBtn');
+  if(SpeechRecognition){
+    const rec = new SpeechRecognition();
+    rec.lang = 'pt-BR';
+    rec.continuous = false;
+    rec.interimResults = false;
+    voiceBtn.addEventListener('click', () => {
+      voiceBtn.classList.add('voice-on');
+      voiceBtn.textContent = '🎤 Ouvindo...';
+      rec.start();
+    });
+    rec.onresult = event => {
+      const said = event.results[0][0].transcript;
+      document.getElementById('aiCommand').value = said;
+      speakAi('Ouvi: <strong>' + said + '</strong>');
+      interpretCommand();
+    };
+    rec.onend = () => { voiceBtn.classList.remove('voice-on'); voiceBtn.textContent = '🎤 Falar'; };
+  } else {
+    voiceBtn.addEventListener('click', () => speakAi('Este navegador não liberou reconhecimento de voz. Use o campo de texto.'));
+  }
+
+  document.querySelectorAll('[data-action]').forEach(btn => btn.addEventListener('click', () => {
+    document.getElementById('assistantAction').value = btn.dataset.action || 'finalizar';
+  }));
+
+  refreshMemoryHints();
+
+  goTo(0);
+  renderCart();
+});
+</script>
+{% endblock %}

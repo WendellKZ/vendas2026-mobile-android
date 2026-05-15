@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <span class="tag">V14 Multiempresa</span>
+      <h2>Cadastro de empresas do grupo</h2>
+      <p>Cadastre CNPJs diferentes para preparar catálogos, vendedores e pedidos separados por empresa.</p>
+    </div>
+  </div>
+
+  {% if erro %}
+  <div class="approval-alert inline-alert">⚠️ {{ erro }}</div>
+  {% endif %}
+
+  <form method="post" action="/empresas" class="form-grid" id="companyForm">
+    <div class="field">
+      <label>Nome fantasia / Nome comercial</label>
+      <input name="name" id="companyName" required placeholder="Ex: Lider Brinquedos">
+    </div>
+    <div class="field">
+      <label>CNPJ</label>
+      <input name="document" id="companyDocument" placeholder="00.000.000/0000-00">
+    </div>
+    <div class="field span-2">
+      <label>Razão Social</label>
+      <input name="corporate_name" id="companyCorporateName" placeholder="Razão social automática">
+    </div>
+    <div class="field">
+      <label>Cidade</label>
+      <input name="city" id="companyCity" placeholder="Cidade">
+    </div>
+    <div class="field">
+      <label>UF</label>
+      <input name="state" id="companyState" placeholder="UF">
+    </div>
+    <div class="field">
+      <label>Inscrição Estadual</label>
+      <input name="state_registration" id="companyStateRegistration" placeholder="Não encontrada automaticamente">
+    </div>
+    <div class="field">
+      <label>SUFRAMA</label>
+      <input name="suframa" id="companySuframa" placeholder="Não encontrada automaticamente">
+    </div>
+    <div class="field">
+      <label>Telefone</label>
+      <input name="phone" id="companyPhone" placeholder="Telefone">
+    </div>
+    <div class="field">
+      <label>E-mail</label>
+      <input name="email" id="companyEmail" placeholder="email@empresa.com">
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select name="status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select>
+    </div>
+    <div class="field span-2">
+      <button type="submit" class="btn btn-primary">Salvar empresa</button>
+      <span class="mini-hint" id="companyLookupStatus"></span>
+    </div>
+  </form>
+</section>
+
+<section class="panel-card">
+  <div class="panel-head"><div><h2>Empresas cadastradas</h2><p>Base inicial para separar operação comercial por CNPJ.</p></div></div>
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Empresa</th><th>CNPJ</th><th>Cidade/UF</th><th>IE</th><th>SUFRAMA</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for e in companies %}
+        <tr>
+          <td><strong>{{ e.name }}</strong><br><small>{{ e.corporate_name or '' }}</small></td>
+          <td>{{ e.document or '-' }}</td>
+          <td>{{ e.city or '-' }}{% if e.state %}/{{ e.state }}{% endif %}</td>
+          <td>{{ e.state_registration or '-' }}</td>
+          <td>{{ e.suframa or '-' }}</td>
+          <td><span class="badge">{{ e.status or 'ativa' }}</span></td>
+          <td><a class="btn btn-light btn-sm" href="/empresas/editar/{{ e.id }}">Editar</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">Nenhuma empresa cadastrada ainda.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const doc = document.getElementById('companyDocument');
+  const status = document.getElementById('companyLookupStatus');
+  const onlyDigits = v => (v || '').replace(/\D/g, '');
+  async function lookup(){
+    const cnpj = onlyDigits(doc.value);
+    if(cnpj.length !== 14) return;
+    status.textContent = 'Consultando CNPJ...';
+    document.getElementById('companyStateRegistration').value = '';
+    document.getElementById('companySuframa').value = '';
+    try{
+      const res = await fetch(`/api/v1/companies/lookup-cnpj/${cnpj}`);
+      if(!res.ok) throw new Error('CNPJ não encontrado');
+      const data = await res.json();
+      if(data.name) document.getElementById('companyName').value = data.name;
+      if(data.corporate_name) document.getElementById('companyCorporateName').value = data.corporate_name;
+      if(data.city) document.getElementById('companyCity').value = data.city;
+      if(data.state) document.getElementById('companyState').value = data.state;
+      if(data.phone) document.getElementById('companyPhone').value = data.phone;
+      if(data.email) document.getElementById('companyEmail').value = data.email;
+      document.getElementById('companyStateRegistration').value = data.state_registration || '';
+      document.getElementById('companySuframa').value = data.suframa || '';
+      status.textContent = 'Consulta concluída. IE/SUFRAMA podem exigir fonte fiscal específica.';
+    }catch(e){ status.textContent = 'Não foi possível consultar automaticamente.'; }
+  }
+  doc.addEventListener('blur', lookup);
+});
+</script>
+{% endblock %}

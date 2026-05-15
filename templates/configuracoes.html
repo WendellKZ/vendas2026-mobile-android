@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-grid two-cols">
+  <div class="panel-card">
+    <div class="panel-head">
+      <div>
+        <h2>Plano de integração ERP</h2>
+        <p>Modelo recomendado para operação comercial</p>
+      </div>
+    </div>
+    <div class="check-list">
+      <div class="check-item">Importar produtos, estoque e preços diretamente do ERP</div>
+      <div class="check-item">Usar o ERP como fonte mestra de cadastro</div>
+      <div class="check-item">Enviar pedidos aprovados de volta ao ERP</div>
+      <div class="check-item">Sincronizar status, faturamento e disponibilidade</div>
+    </div>
+  </div>
+
+  <div class="panel-card">
+    <div class="panel-head">
+      <div>
+        <h2>Conectores previstos</h2>
+        <p>Estrutura visual pronta para a próxima fase técnica</p>
+      </div>
+    </div>
+    <div class="integration-grid">
+      <div class="integration-box">
+        <span class="tag">Conector</span>
+        <strong>Sankhya</strong>
+        <p>Consulta de produtos, tabela de preço e estoque.</p>
+      </div>
+      <div class="integration-box">
+        <span class="tag">Conector</span>
+        <strong>SAP</strong>
+        <p>Importação de catálogo e retorno de pedido.</p>
+      </div>
+      <div class="integration-box">
+        <span class="tag">Conector</span>
+        <strong>TOTVS</strong>
+        <p>Sincronização comercial e operacional.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Vendas 2026" }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar compact-sidebar">
+      <div class="brand">
+        <div class="brand-logo">EV</div>
+        <div>
+          <strong>Vendas 2026</strong>
+          <span>Operação comercial B2B</span>
+        </div>
+      </div>
+
+      <nav class="side-nav compact-side-nav">
+        <a href="/painel" class="{% if request.url.path == '/painel' %}active{% endif %}">
+          <span>📊</span> Dashboard
+        </a>
+
+        <a href="/pedidos" class="{% if request.url.path.startswith('/pedidos') %}active{% endif %}">
+          <span>🧾</span> Pedidos
+        </a>
+
+        <a href="/clientes" class="{% if request.url.path.startswith('/clientes') %}active{% endif %}">
+          <span>👥</span> Clientes
+        </a>
+
+        <a href="/produtos" class="{% if request.url.path.startswith('/produtos') %}active{% endif %}">
+          <span>📦</span> Catálogo
+        </a>
+
+        <a href="/transportadoras" class="{% if request.url.path.startswith('/transportadoras') %}active{% endif %}">
+          <span>🚚</span> Transportadoras
+        </a>
+
+        <a href="/relatorios" class="{% if request.url.path.startswith('/relatorios') %}active{% endif %}">
+          <span>📈</span> Relatórios
+        </a>
+
+        {% if is_admin is defined and is_admin %}
+        <a href="/vendedores" class="{% if request.url.path.startswith('/vendedores') %}active{% endif %}">
+          <span>🧑‍💼</span> Vendedores
+        </a>
+        {% endif %}
+
+        <button type="button"
+                class="config-menu-button {% if request.url.path.startswith('/configuracoes') or request.url.path.startswith('/empresas') or request.url.path.startswith('/regras') %}active open{% endif %}"
+                id="configMenuButton">
+          <span>⚙️</span>
+          <strong>Configurações</strong>
+          <small>▾</small>
+        </button>
+
+        {% if is_admin is defined and is_admin %}
+        <div class="side-submenu {% if request.url.path.startswith('/configuracoes') or request.url.path.startswith('/empresas') or request.url.path.startswith('/regras') %}open{% endif %}" id="configSubmenu">
+          <a href="/configuracoes" class="{% if request.url.path.startswith('/configuracoes') %}active{% endif %}">
+            <span>⚙️</span> Geral
+          </a>
+
+          <a href="/empresas" class="{% if request.url.path.startswith('/empresas') %}active{% endif %}">
+            <span>🏢</span> Empresas
+          </a>
+
+          <a href="/regras" class="{% if request.url.path.startswith('/regras') %}active{% endif %}">
+            <span>🧠</span> Regras comerciais
+          </a>
+        </div>
+        {% else %}
+        <div class="side-submenu {% if request.url.path.startswith('/configuracoes') %}open{% endif %}" id="configSubmenu">
+          <a href="/configuracoes" class="{% if request.url.path.startswith('/configuracoes') %}active{% endif %}">
+            <span>⚙️</span> Geral
+          </a>
+        </div>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-card seller-card compact-seller-card">
+        <div class="compact-session-line">
+          <div>
+            <small>Modo de operação</small>
+            <strong>{{ active_seller.name if active_seller is defined and active_seller else 'Administrador' }}</strong>
+          </div>
+          <a href="/logout">Sair</a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <span class="page-kicker">Central comercial</span>
+          <h1>{{ title or "Vendas 2026" }}</h1>
+          <p>
+            {{ subtitle or "Gestão comercial por empresa, com pedidos, clientes, catálogo, estoque e indicadores executivos" }}
+            {% if active_company is defined and active_company %}
+              <br><strong>Empresa ativa:</strong> {{ active_company.name }}{% if active_company.document %} • {{ active_company.document }}{% endif %}
+            {% endif %}
+          </p>
+        </div>
+
+        {% if not request.url.path.startswith('/empresas') and not request.url.path.startswith('/regras') and not request.url.path.startswith('/configuracoes') %}
+        <div class="topbar-actions">
+          {% if allowed_companies is defined and allowed_companies|length > 1 %}
+          <form method="post" action="/trocar-empresa" class="company-switch-form">
+            <select name="company_id" onchange="this.form.submit()" class="company-switch-select" title="Empresa ativa">
+              {% for company in allowed_companies %}
+              <option value="{{ company.id }}" {% if active_company is defined and active_company and active_company.id == company.id %}selected{% endif %}>{{ company.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+          {% endif %}
+          <a class="btn btn-light btn-sm" href="/clientes">Novo cliente</a>
+          <a class="btn btn-light btn-sm" href="/assistente-pedido">Pedido guiado</a>
+          <a class="btn btn-primary btn-sm" href="/pedidos/novo">+ Novo pedido</a>
+        </div>
+        {% endif %}
+      </header>
+
+      <section class="page-content">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+
+  <style>
+    .compact-sidebar {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .compact-sidebar .brand {
+      flex-shrink: 0;
+      margin-bottom: 10px;
+    }
+
+    .compact-side-nav {
+      flex: 1;
+      overflow: visible;
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .compact-side-nav > a,
+    .config-menu-button {
+      min-height: 42px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .config-menu-button {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-left: 14px;
+      padding-right: 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .config-menu-button strong {
+      flex: 1;
+      font-size: inherit;
+    }
+
+    .config-menu-button small {
+      font-weight: 900;
+      opacity: 0.8;
+      transition: transform .15s ease;
+    }
+
+    .config-menu-button.active,
+    .config-menu-button:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .config-menu-button.open small {
+      transform: rotate(180deg);
+    }
+
+    .side-submenu {
+      display: none;
+      padding-left: 20px;
+      margin-top: -2px;
+      margin-bottom: 4px;
+      gap: 3px;
+    }
+
+    .side-submenu.open {
+      display: grid;
+    }
+
+    .side-submenu a {
+      font-size: 12.5px;
+      padding: 7px 10px;
+      border-radius: 11px;
+      opacity: 0.92;
+      min-height: 34px;
+    }
+
+    .side-submenu a span {
+      width: 18px;
+      display: inline-block;
+    }
+
+    .compact-seller-card {
+      margin-top: auto;
+      flex-shrink: 0;
+      padding: 12px 14px !important;
+      border-radius: 16px !important;
+      min-height: auto !important;
+      max-height: none !important;
+    }
+
+    .compact-session-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .compact-session-line small {
+      display: block;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .7;
+      margin-bottom: 3px;
+    }
+
+    .compact-session-line strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .compact-session-line a {
+      color: #fff;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    @media (max-height: 740px) {
+      .compact-side-nav > a,
+      .config-menu-button {
+        min-height: 38px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+
+      .side-submenu a {
+        min-height: 30px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .compact-seller-card {
+        padding: 10px 12px !important;
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const button = document.getElementById('configMenuButton');
+      const submenu = document.getElementById('configSubmenu');
+
+      if (!button || !submenu) return;
+
+      if (submenu.classList.contains('open')) {
+        button.classList.add('open');
+      }
+
+      button.addEventListener('click', function () {
+        submenu.classList.toggle('open');
+        button.classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>
+<style>
+.company-switch-form{margin:0}.company-switch-select{height:36px;border:1px solid #dbe5f3;border-radius:999px;padding:0 14px;background:#fff;font-weight:800;color:#172554;box-shadow:0 10px 28px rgba(15,23,42,.08)}
+</style>

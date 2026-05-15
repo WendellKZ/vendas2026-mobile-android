@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="topbar"><div class="page-title"><h1>Clientes</h1><p>Cadastro comercial com carteira, status e tabela de preço.</p></div></div>
+<div class="row-2">
+  <div class="card">
+    <div class="section-title"><h2>Novo cliente</h2></div>
+    <form method="post" action="/clientes/novo" class="form-grid">
+      <div class="field"><label>Empresa</label><select name="company_id">{% for company in companies %}<option value="{{ company.id }}">{{ company.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Nome</label><input name="name" required /></div>
+      <div class="field"><label>Documento</label><input name="document" required /></div>
+      <div class="field"><label>Cidade</label><input name="city" /></div>
+      <div class="field"><label>Status</label><select name="status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="prospect">Prospect</option></select></div>
+      <div class="field"><label>Segmento</label><input name="segment" value="geral" /></div>
+      <div class="field"><label>Tabela padrão</label><select name="default_price_table_id"><option value="">Sem tabela</option>{% for table in price_tables %}<option value="{{ table.id }}">{{ table.name }}</option>{% endfor %}</select></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar cliente</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="section-title"><h2>Indicadores</h2></div>
+    <p><strong>Total:</strong> {{ customers|length }}</p>
+    <p><strong>Ativos:</strong> {{ customers|selectattr('status','equalto','ativo')|list|length }}</p>
+    <p><strong>Prospects:</strong> {{ customers|selectattr('status','equalto','prospect')|list|length }}</p>
+  </div>
+</div>
+<div class="card" style="margin-top:18px;">
+  <div class="section-title"><h2>Base de clientes</h2></div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Nome</th><th>Documento</th><th>Cidade</th><th>Status</th><th>Empresa</th><th>Tabela</th></tr></thead><tbody>
+    {% for customer in customers %}
+      <tr><td>{{ customer.id }}</td><td>{{ customer.name }}</td><td>{{ customer.document }}</td><td>{{ customer.city }}</td><td>{{ customer.status|title }}</td><td>{{ customer.company.name }}</td><td>{{ customer.default_price_table.name if customer.default_price_table else '—' }}</td></tr>
+    {% else %}
+      <tr><td colspan="7"><div class="empty">Nenhum cliente cadastrado.</div></td></tr>
+    {% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

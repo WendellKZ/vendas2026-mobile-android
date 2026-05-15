@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:15
+    container_name: erp_vendas_db
+    environment:
+      POSTGRES_DB: erp_vendas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - erp_vendas_postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: erp_vendas_api
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/erp_vendas
+    ports:
+      - "5098:8000"
+    volumes:
+      - .:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  erp_vendas_postgres_data:

@@ -9,6 +9,7 @@ import com.vendas2026.mobile.model.PedidoEnvio
 import com.vendas2026.mobile.model.ProdutoResumo
 import com.vendas2026.mobile.model.UsuarioLogado
 import com.vendas2026.mobile.model.TransportadoraResumo
+import com.vendas2026.mobile.model.MobileRemoteConfig
 
 object MobileRepository {
     fun login(usuario: String, senha: String): ApiResult<UsuarioLogado> {
@@ -44,6 +45,12 @@ object MobileRepository {
     fun condicoesPagamento(token: String): ApiResult<List<CondicaoPagamentoResumo>> {
         if (AppConfig.MOCK_MODE) return ApiResult(true, MockRepository.condicoesPagamento)
         return ApiClient.condicoesPagamento(token)
+    }
+
+
+    fun mobileConfig(token: String): ApiResult<MobileRemoteConfig> {
+        if (AppConfig.MOCK_MODE) return ApiResult(true, MobileRemoteConfig())
+        return ApiClient.mobileConfig(token)
     }
 
     fun criarPedido(token: String, pedido: PedidoEnvio): ApiResult<PedidoResumo> {

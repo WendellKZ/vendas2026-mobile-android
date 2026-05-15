@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | ERP Vendas Pro</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="login-body">
+  <main class="login-shell">
+    <section class="login-hero">
+      <div class="brand-logo big">EV</div>
+      <h1>ERP Vendas Pro</h1>
+      <p>Login por vendedor, pedidos separados por carteira e visão administrativa completa.</p>
+      <div class="login-demo-box">
+        <strong>Acessos padrão</strong>
+        <span>Admin: admin@lider.com / admin123</span>
+        <span>Vendedor: vendedor@lider.com / 123456</span>
+      </div>
+    </section>
+    <form method="post" action="/login" class="login-card">
+      <span class="page-kicker">Acesso comercial</span>
+      <h2>Entrar no sistema</h2>
+      {% if error %}<div class="approval-alert" style="display:block;">{{ error }}</div>{% endif %}
+      <div class="field"><label>E-mail</label><input type="email" name="email" placeholder="seu.email@empresa.com" required autofocus></div>
+      <div class="field"><label>Senha</label><input type="password" name="password" placeholder="Sua senha" required></div>
+      <button class="btn btn-primary full-btn" type="submit">Entrar</button>
+    </form>
+  </main>
+</body>
+</html>

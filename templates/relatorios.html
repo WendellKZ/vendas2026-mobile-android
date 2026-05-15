@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero-panel">
+  <div class="hero-card mobile-hero">
+    <span class="page-kicker">Central de relatórios</span>
+    <h2>Indicadores comerciais com Excel em 1 clique</h2>
+    <p>Relatórios funcionais para representante e gerente: vendas, ranking, produtos, clientes, status, descontos, comissões e modelo personalizado por agrupamento.</p>
+    <div class="actions" style="margin-top:18px">
+      <a class="btn btn-light" href="/relatorios/exportar?tipo={{ selected_type }}&data_inicio={{ filters.data_inicio }}&data_fim={{ filters.data_fim }}&seller_id={{ filters.seller_id }}&customer_id={{ filters.customer_id }}&status={{ filters.status }}&agrupamento={{ selected_group }}">📤 Exportar Excel</a>
+    </div>
+  </div>
+  <div class="panel-card">
+    <div class="panel-head">
+      <div>
+        <h2>Relatório atual</h2>
+        <p>{{ reports[selected_type] }}</p>
+      </div>
+      <span class="badge">{{ rows|length }} linhas</span>
+    </div>
+    <div class="ranking-list">
+      <div class="ranking-row"><div><strong>Total vendido</strong><span>Após filtros aplicados</span></div><b>{{ "R$ {:,.2f}".format(summary.faturamento).replace(',', 'X').replace('.', ',').replace('X', '.') }}</b></div>
+      <div class="ranking-row"><div><strong>Ticket médio</strong><span>Faturamento / pedidos</span></div><b>{{ "R$ {:,.2f}".format(summary.ticket_medio).replace(',', 'X').replace('.', ',').replace('X', '.') }}</b></div>
+      <div class="ranking-row"><div><strong>Comissão</strong><span>Total calculado</span></div><b>{{ "R$ {:,.2f}".format(summary.comissao).replace(',', 'X').replace('.', ',').replace('X', '.') }}</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card accent-blue"><div class="stat-label">Pedidos</div><div class="stat-value">{{ summary.pedidos }}</div><div class="stat-foot">Quantidade no filtro</div></div>
+  <div class="stat-card accent-green"><div class="stat-label">Faturamento</div><div class="stat-value">{{ "R$ {:,.2f}".format(summary.faturamento).replace(',', 'X').replace('.', ',').replace('X', '.') }}</div><div class="stat-foot">Total líquido</div></div>
+  <div class="stat-card accent-orange"><div class="stat-label">Descontos</div><div class="stat-value">{{ "R$ {:,.2f}".format(summary.desconto).replace(',', 'X').replace('.', ',').replace('X', '.') }}</div><div class="stat-foot">Impacto comercial</div></div>
+  <div class="stat-card accent-purple"><div class="stat-label">Comissões</div><div class="stat-value">{{ "R$ {:,.2f}".format(summary.comissao).replace(',', 'X').replace('.', ',').replace('X', '.') }}</div><div class="stat-foot">Valor previsto</div></div>
+</div>
+
+<div class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Filtros flexíveis</h2>
+      <p>Use os relatórios prontos ou selecione “Relatório personalizado” para agrupar por vendedor, cliente, produto, status, pagamento ou mês.</p>
+    </div>
+  </div>
+  <form method="get" action="/relatorios" class="form-grid">
+    <div class="field">
+      <label>Tipo de relatório</label>
+      <select name="tipo" id="tipoRelatorio">
+        {% for key, label in reports.items() %}
+          <option value="{{ key }}" {% if key == selected_type %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" id="campoAgrupamento">
+      <label>Agrupar por (para relatório personalizado)</label>
+      <select name="agrupamento">
+        {% for key, label in custom_groups.items() %}
+          <option value="{{ key }}" {% if key == selected_group %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Data inicial</label>
+      <input type="date" name="data_inicio" value="{{ filters.data_inicio }}">
+    </div>
+    <div class="field">
+      <label>Data final</label>
+      <input type="date" name="data_fim" value="{{ filters.data_fim }}">
+    </div>
+    <div class="field">
+      <label>Vendedor</label>
+      <select name="seller_id" {% if not is_admin %}disabled{% endif %}>
+        <option value="">Todos</option>
+        {% for seller in sellers %}
+          <option value="{{ seller.id }}" {% if filters.seller_id|string == seller.id|string %}selected{% endif %}>{{ seller.name }}</option>
+        {% endfor %}
+      </select>
+      {% if not is_admin %}<input type="hidden" name="seller_id" value="{{ active_seller.id }}">{% endif %}
+    </div>
+    <div class="field">
+      <label>Cliente</label>
+      <select name="customer_id">
+        <option value="">Todos</option>
+        {% for customer in customers %}
+          <option value="{{ customer.id }}" {% if filters.customer_id|string == customer.id|string %}selected{% endif %}>{{ customer.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select name="status">
+        <option value="">Todos</option>
+        {% for item in statuses %}
+          <option value="{{ item }}" {% if filters.status == item %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="actions full">
+      <button class="btn btn-primary" type="submit">🔎 Aplicar filtros</button>
+      <a class="btn btn-light" href="/relatorios">Limpar</a>
+      <a class="btn btn-success" href="/relatorios/exportar?tipo={{ selected_type }}&data_inicio={{ filters.data_inicio }}&data_fim={{ filters.data_fim }}&seller_id={{ filters.seller_id }}&customer_id={{ filters.customer_id }}&status={{ filters.status }}&agrupamento={{ selected_group }}">📤 Exportar Excel</a>
+    </div>
+  </form>
+</div>
+
+<div class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Resultado</h2>
+      <p>Prévia do relatório. A exportação em Excel leva o mesmo filtro aplicado aqui.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          {% for header in headers %}<th>{{ header }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% if rows %}
+          {% for row in rows %}
+          <tr>
+            {% for col in row %}
+              <td>{% if col is number and not col is integer %}{{ "R$ {:,.2f}".format(col).replace(',', 'X').replace('.', ',').replace('X', '.') }}{% else %}{{ col }}{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="{{ headers|length or 1 }}">Nenhum dado encontrado para os filtros selecionados.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function ajustarAgrupamento(){
+    const tipo = document.getElementById('tipoRelatorio');
+    const campo = document.getElementById('campoAgrupamento');
+    if(!tipo || !campo) return;
+    campo.style.display = tipo.value === 'personalizado' ? 'flex' : 'none';
+  }
+  document.getElementById('tipoRelatorio')?.addEventListener('change', ajustarAgrupamento);
+  ajustarAgrupamento();
+</script>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-grid two-cols">
+  <div class="panel-card">
+    <div class="panel-head">
+      <div>
+        <h2>Novo cliente</h2>
+        <p>Consulta automática por CNPJ com preenchimento comercial e fiscal</p>
+      </div>
+    </div>
+
+    <div class="info-banner compact" style="margin-bottom:16px;">
+      Ao digitar o <strong>CNPJ</strong>, o sistema tenta preencher automaticamente:
+      <strong>Nome comercial</strong>, <strong>Razão Social</strong>, <strong>Cidade</strong>,
+      <strong>Inscrição Estadual</strong> e <strong>Suframa</strong>. O representante completa o
+      <strong>e-mail de cobrança</strong> e pode depois <strong>editar o local de entrega</strong>.
+    </div>
+
+    {% if erro %}
+    <div class="info-banner compact" style="margin-bottom:16px; border-color:#fecaca; background:#fff1f2; color:#991b1b;">
+      {{ erro }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/clientes" class="form-grid" id="cliente-form" data-existing-documents='{{ existing_documents | tojson }}'>
+      <div class="field"><label>Nome fantasia / Nome comercial</label><input id="name" name="name" placeholder="Ex.: Brinca Mais" required></div>
+      <div class="field"><label>CNPJ</label><input id="cnpj" name="document" placeholder="00.000.000/0000-00"><small id="cnpj-warning" style="display:none;color:#b91c1c;font-weight:700;margin-top:6px;">CNPJ já cadastrado. Não é possível cadastrar duplicado.</small></div>
+
+      <div class="field full"><label>Razão Social</label><input id="corporate_name" name="corporate_name" placeholder="Preenchimento automático por CNPJ"></div>
+
+      <div class="field"><label>Cidade</label><input id="city" name="city" placeholder="Preenchimento automático por CNPJ / Suframa"></div>
+      <div class="field"><label>Inscrição Estadual</label><input id="state_registration" name="state_registration" placeholder="Preenchimento automático por CNPJ"></div>
+
+      <div class="field"><label>E-mail geral</label><input name="email" placeholder="email@cliente.com"></div>
+      <div class="field"><label>Telefone</label><input id="phone" name="phone" placeholder="(00) 00000-0000"></div>
+      <div class="field"><label>E-mail de cobrança</label><input name="billing_email" placeholder="financeiro@cliente.com"></div>
+
+      <div class="field full">
+        <label>Status</label>
+        <select name="status">
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="prospect">Prospect</option>
+        </select>
+      </div>
+
+      <div class="field full" id="suframa-wrap" style="display:none;">
+        <label>Número Suframa</label>
+        <input id="suframa" name="suframa" placeholder="Preenchimento automático / conferência manual">
+      </div>
+
+      <div class="actions full">
+        <button type="submit" class="btn btn-primary">Salvar cliente</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel-card">
+    <div class="panel-head">
+      <div>
+        <h2>Carteira de clientes</h2>
+        <p>Base comercial compartilhada entre todas as empresas</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Cidade</th>
+            <th>Local entrega</th>
+            <th>Telefone</th>
+            <th>IE</th>
+            <th>Suframa</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in customers %}
+          <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.name }}</td>
+            <td>{{ c.city or '-' }}</td>
+            <td>{{ c.delivery_location or '-' }}</td>
+            <td>{{ c.phone or '-' }}</td>
+            <td>{{ c.state_registration or '-' }}</td>
+            <td>{{ c.suframa or '-' }}</td>
+            <td><a class="btn btn-light" href="/clientes/editar/{{ c.id }}">Editar</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8">Nenhum cliente cadastrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    const form = document.getElementById("cliente-form");
+    const nameInput = document.getElementById("name");
+    const cnpjInput = document.getElementById("cnpj");
+    const cnpjWarning = document.getElementById("cnpj-warning");
+    const corporateNameInput = document.getElementById("corporate_name");
+    const cityInput = document.getElementById("city");
+    const phoneInput = document.getElementById("phone");
+    const ieInput = document.getElementById("state_registration");
+    const suframaWrap = document.getElementById("suframa-wrap");
+    const suframaInput = document.getElementById("suframa");
+    const existingDocuments = new Set(JSON.parse(form.dataset.existingDocuments || "[]"));
+
+    function somenteDigitos(valor) {
+      return (valor || "").replace(/\D/g, "");
+    }
+
+    function documentoJaExiste() {
+      const limpo = somenteDigitos(cnpjInput.value);
+      return limpo.length === 14 && existingDocuments.has(limpo);
+    }
+
+    function atualizarAvisoDuplicidade() {
+      const duplicado = documentoJaExiste();
+      cnpjWarning.style.display = duplicado ? "block" : "none";
+      cnpjInput.style.borderColor = duplicado ? "#ef4444" : "";
+      return duplicado;
+    }
+
+    function normalizeTradeName(corporateName) {
+      if (!corporateName) return "";
+      return corporateName
+        .replace(/\bLTDA\b/gi, "")
+        .replace(/\bEIRELI\b/gi, "")
+        .replace(/\bME\b/gi, "")
+        .replace(/\bMEI\b/gi, "")
+        .replace(/\bS\/A\b/gi, "")
+        .replace(/\bSA\b/gi, "")
+        .replace(/\bCOMERCIO\b/gi, "")
+        .replace(/\bINDUSTRIA\b/gi, "")
+        .replace(/\bDISTRIBUIDORA\b/gi, "")
+        .replace(/\bDE\b/gi, " ")
+        .replace(/\bDO\b/gi, " ")
+        .replace(/\bDA\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    async function consultarCNPJ(cnpj) {
+      const limpo = (cnpj || "").replace(/\D/g, "");
+      if (limpo.length !== 14) return null;
+      try {
+        const response = await fetch(`/api/v1/customers/lookup-cnpj/${limpo}`);
+        if (!response.ok) return null;
+        return await response.json();
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function limparSuframa() {
+      suframaInput.value = "";
+      suframaWrap.style.display = "none";
+    }
+
+    function limparDadosFiscaisConsulta() {
+      corporateNameInput.value = "";
+      cityInput.value = "";
+      phoneInput.value = "";
+      ieInput.value = "";
+      limparSuframa();
+    }
+
+    async function preencherPorCNPJ() {
+      // Limpa antes de consultar para nunca reaproveitar dados da consulta anterior.
+      limparDadosFiscaisConsulta();
+      const consulta = await consultarCNPJ(cnpjInput.value);
+      if (!consulta) return;
+
+      const corporateName = (consulta.corporate_name || "").trim();
+      const normalizedTradeName = normalizeTradeName(corporateName);
+      const tradeName =
+        (consulta.name || "").trim() ||
+        normalizedTradeName ||
+        corporateName ||
+        "Cliente Consultado";
+
+      nameInput.value = tradeName;
+      corporateNameInput.value = corporateName;
+      cityInput.value = (consulta.city || "").trim();
+      phoneInput.value = (consulta.phone || "").trim();
+      ieInput.value = (consulta.state_registration || "").trim();
+
+      const suframaEncontrada = (consulta.suframa || "").trim();
+      if (suframaEncontrada) {
+        suframaWrap.style.display = "block";
+        suframaInput.value = suframaEncontrada;
+      } else {
+        limparSuframa();
+      }
+    }
+
+    cnpjInput.addEventListener("input", function () {
+      limparSuframa();
+      atualizarAvisoDuplicidade();
+    });
+    cnpjInput.addEventListener("blur", async function () {
+      atualizarAvisoDuplicidade();
+      await preencherPorCNPJ();
+      atualizarAvisoDuplicidade();
+    });
+    form.addEventListener("submit", function (event) {
+      if (atualizarAvisoDuplicidade()) {
+        event.preventDefault();
+        cnpjInput.focus();
+      }
+    });
+  })();
+</script>
+{% endblock %}

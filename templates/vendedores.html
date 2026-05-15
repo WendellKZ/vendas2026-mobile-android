@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <span class="tag">V14.2 Multiempresa</span>
+      <h2>Cadastro de vendedores</h2>
+      <p>Cadastre usuários comerciais e defina quais empresas cada vendedor pode representar.</p>
+    </div>
+  </div>
+
+  {% if erro %}
+  <div class="approval-alert inline-alert">
+    ⚠️ {{ erro|replace('%20', ' ') }}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/vendedores" class="form-grid">
+    <div class="field">
+      <label>Nome</label>
+      <input name="name" required placeholder="Nome do vendedor">
+    </div>
+
+    <div class="field">
+      <label>E-mail / Login</label>
+      <input name="email" type="email" required placeholder="vendedor@empresa.com">
+    </div>
+
+    <div class="field">
+      <label>Perfil</label>
+      <select name="role">
+        <option value="seller">Vendedor</option>
+        <option value="manager">Gestor</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Senha inicial</label>
+      <input name="password" value="123456">
+    </div>
+
+    <div class="field">
+      <label>Status</label>
+      <select name="active">
+        <option value="1">Ativo</option>
+        <option value="0">Inativo</option>
+      </select>
+    </div>
+
+    <div class="field span-2">
+      <label>Empresas autorizadas</label>
+
+      <div class="check-grid">
+        {% for company in companies %}
+        <label class="check-card">
+          <input type="checkbox" name="company_ids" value="{{ company.id }}">
+          <span>
+            <strong>{{ company.name }}</strong>
+            <small>{{ company.document or 'CNPJ não informado' }}</small>
+          </span>
+        </label>
+        {% else %}
+        <div class="info-banner">
+          Cadastre empresas em Configurações &gt; Empresas antes de vincular vendedores.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field span-2">
+      <button type="submit" class="btn btn-primary">Salvar vendedor</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <h2>Vendedores cadastrados</h2>
+      <p>Veja usuários, perfis e empresas autorizadas.</p>
+    </div>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Vendedor</th>
+          <th>Perfil</th>
+          <th>Status</th>
+          <th>Empresas autorizadas</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <strong>{{ u.name }}</strong><br>
+            <small>{{ u.email or '-' }}</small>
+          </td>
+          <td>{{ u.role or 'seller' }}</td>
+          <td>
+            <span class="badge">{{ 'Ativo' if u.active else 'Inativo' }}</span>
+          </td>
+          <td>
+            {% set ids = user_company_map.get(u.id) or [] %}
+            {% for c in companies if c.id in ids %}
+              <span class="badge">{{ c.name }}</span>
+            {% else %}
+              <small>Nenhuma empresa vinculada</small>
+            {% endfor %}
+          </td>
+          <td>
+            <a class="btn btn-light btn-sm" href="/vendedores/editar/{{ u.id }}">Editar</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">Nenhum vendedor cadastrado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<style>
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .check-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid #d9e2ef;
+    border-radius: 14px;
+    padding: 12px;
+    background: #fff;
+  }
+
+  .check-card strong {
+    display: block;
+    font-weight: 900;
+  }
+
+  .check-card small {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 3px;
+  }
+
+  @media(max-width: 760px) {
+    .check-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="topbar"><div class="page-title"><h1>Configurações</h1><p>Cadastros estruturais para sustentar o ERP comercial.</p></div></div>
+<div class="subnav">
+  <a href="#empresas" class="active">Empresas</a>
+  <a href="#filiais">Filiais</a>
+  <a href="#vendedores">Usuários</a>
+  <a href="#categorias">Categorias</a>
+  <a href="#tabelas">Tabelas</a>
+  <a href="#pagamentos">Pagamentos</a>
+</div>
+<div class="grid">
+  <div class="card" id="empresas">
+    <div class="section-title"><h2>Empresas</h2></div>
+    <form method="post" action="/configuracoes/empresa" class="form-grid two">
+      <div class="field"><label>Nome da empresa</label><input name="name" required /></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar empresa</button></div>
+    </form>
+    <div class="footer-note">{% for company in companies %}#{{ company.id }} {{ company.name }}{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  <div class="card" id="filiais">
+    <div class="section-title"><h2>Filiais</h2></div>
+    <form method="post" action="/configuracoes/filial" class="form-grid">
+      <div class="field"><label>Empresa</label><select name="company_id">{% for company in companies %}<option value="{{ company.id }}">{{ company.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Nome da filial</label><input name="name" required /></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar filial</button></div>
+    </form>
+    <div class="footer-note">{% for branch in branches %}#{{ branch.id }} {{ branch.name }} ({{ branch.company.name }}){% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  <div class="card" id="vendedores">
+    <div class="section-title"><h2>Usuários e perfis</h2></div>
+    <form method="post" action="/configuracoes/vendedor" class="form-grid">
+      <div class="field"><label>Empresa</label><select name="company_id">{% for company in companies %}<option value="{{ company.id }}">{{ company.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Nome</label><input name="name" required /></div>
+      <div class="field"><label>E-mail</label><input name="email" type="email" required /></div>
+      <div class="field"><label>Perfil</label><select name="role"><option value="admin">Admin</option><option value="gerente">Gerente</option><option value="vendedor">Vendedor</option></select></div>
+      <div class="field"><label>Desconto máximo %</label><input name="max_discount_percent" type="number" step="0.01" value="0" /></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar usuário</button></div>
+    </form>
+    <div class="footer-note">{% for seller in sellers %}{{ seller.name }} ({{ seller.role }}){% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  <div class="card" id="categorias">
+    <div class="section-title"><h2>Categorias</h2></div>
+    <form method="post" action="/configuracoes/categoria" class="form-grid two">
+      <div class="field"><label>Nome da categoria</label><input name="name" required /></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar categoria</button></div>
+    </form>
+    <div class="footer-note">{% for category in categories %}{{ category.name }}{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  <div class="card" id="tabelas">
+    <div class="section-title"><h2>Tabelas de preço</h2></div>
+    <form method="post" action="/configuracoes/tabela-preco" class="form-grid">
+      <div class="field"><label>Empresa</label><select name="company_id">{% for company in companies %}<option value="{{ company.id }}">{{ company.name }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Nome da tabela</label><input name="name" required /></div>
+      <div class="field"><label>Padrão?</label><select name="is_default"><option value="false">Não</option><option value="true">Sim</option></select></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar tabela</button></div>
+    </form>
+    <div class="footer-note">{% for table in price_tables %}{{ table.name }} ({{ table.company.name }}){% if table.is_default %} - padrão{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+  <div class="card" id="pagamentos">
+    <div class="section-title"><h2>Condições de pagamento</h2></div>
+    <form method="post" action="/configuracoes/condicao-pagamento" class="form-grid">
+      <div class="field"><label>Nome</label><input name="name" required /></div>
+      <div class="field"><label>Parcelas</label><input name="installments" type="number" value="1" min="1" /></div>
+      <div class="field"><label>Juros %</label><input name="interest_percent" type="number" step="0.01" value="0" /></div>
+      <div class="field"><label>Entrada %</label><input name="entry_percent" type="number" step="0.01" value="0" /></div>
+      <div class="field" style="align-self:end;"><button type="submit">Salvar condição</button></div>
+    </form>
+    <div class="footer-note">{% for payment in payments %}{{ payment.name }} - {{ payment.installments }}x{% if not loop.last %} · {% endif %}{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}

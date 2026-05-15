@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel-card">
+  <div class="panel-head">
+    <div>
+      <span class="tag">V14 Multiempresa</span>
+      <h2>Editar empresa</h2>
+      <p>Atualize os dados comerciais e fiscais da empresa.</p>
+    </div>
+  </div>
+
+  <form method="post" class="form-grid">
+    <div class="field">
+      <label>Nome fantasia</label>
+      <input name="name" value="{{ company.name }}" required>
+    </div>
+    <div class="field">
+      <label>CNPJ</label>
+      <input name="document" value="{{ company.document or '' }}">
+    </div>
+    <div class="field span-2">
+      <label>Razão Social</label>
+      <input name="corporate_name" value="{{ company.corporate_name or '' }}">
+    </div>
+    <div class="field">
+      <label>Cidade</label>
+      <input name="city" value="{{ company.city or '' }}">
+    </div>
+    <div class="field">
+      <label>UF</label>
+      <input name="state" value="{{ company.state or '' }}">
+    </div>
+    <div class="field">
+      <label>Inscrição Estadual</label>
+      <input name="state_registration" value="{{ company.state_registration or '' }}">
+    </div>
+    <div class="field">
+      <label>SUFRAMA</label>
+      <input name="suframa" value="{{ company.suframa or '' }}">
+    </div>
+    <div class="field">
+      <label>Telefone</label>
+      <input name="phone" value="{{ company.phone or '' }}">
+    </div>
+    <div class="field">
+      <label>E-mail</label>
+      <input name="email" value="{{ company.email or '' }}">
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select name="status">
+        <option value="ativa" {% if company.status == 'ativa' %}selected{% endif %}>Ativa</option>
+        <option value="inativa" {% if company.status == 'inativa' %}selected{% endif %}>Inativa</option>
+      </select>
+    </div>
+    <div class="field span-2">
+      <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      <a href="/empresas" class="btn btn-light">Voltar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
