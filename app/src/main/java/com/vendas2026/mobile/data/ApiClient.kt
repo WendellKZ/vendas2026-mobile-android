@@ -15,6 +15,7 @@ import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.UUID
 
 object ApiClient {
     private fun request(method: String, endpoint: String, token: String? = null, body: JSONObject? = null): String {
@@ -213,28 +214,48 @@ object ApiClient {
         }
     }
 
+    private fun numericIdOrZero(value: String): Int {
+        return value.filter { it.isDigit() }.toIntOrNull() ?: 0
+    }
+
     fun criarPedido(token: String, pedido: PedidoEnvio): ApiResult<PedidoResumo> {
         return try {
+            val mobileUuid = "APP-" + UUID.randomUUID().toString()
             val itens = JSONArray()
             pedido.itens.forEach { item ->
+                val productId = numericIdOrZero(item.codigoProduto)
                 itens.put(JSONObject()
+                    // Campos usados pela API compatível do ERP Vendas 2026
                     .put("codigo_produto", item.codigoProduto)
                     .put("nome_produto", item.nomeProduto)
                     .put("quantidade", item.quantidade)
                     .put("preco_unitario", item.precoUnitario)
                     .put("desconto_percentual", item.descontoPercentual)
                     .put("subtotal_com_desconto", item.subtotalComDesconto)
+                    // Aliases para endpoints mais novos/antigos do ERP
+                    .put("sku", item.codigoProduto)
+                    .put("code", item.codigoProduto)
+                    .put("product_id", productId)
+                    .put("quantity", item.quantidade)
+                    .put("discount", item.descontoPercentual)
+                    .put("unit_price", item.precoUnitario)
                 )
             }
             val body = JSONObject()
+                .put("mobile_uuid", mobileUuid)
+                .put("mobile_id", mobileUuid)
                 .put("empresa_id", pedido.empresaId)
+                .put("company_id", numericIdOrZero(pedido.empresaId))
                 .put("empresa_nome", pedido.empresaNome)
                 .put("codigo_cliente", pedido.codigoCliente)
+                .put("customer_id", numericIdOrZero(pedido.codigoCliente))
                 .put("nome_cliente", pedido.nomeCliente)
                 .put("codigo_transportadora", pedido.codigoTransportadora)
+                .put("carrier_id", numericIdOrZero(pedido.codigoTransportadora))
                 .put("nome_transportadora", pedido.nomeTransportadora)
                 .put("codigo_condicao_pagamento", pedido.codigoCondicaoPagamento)
                 .put("condicao_pagamento", pedido.condicaoPagamento)
+                .put("payment_condition", pedido.condicaoPagamento)
                 .put("observacao", pedido.observacao)
                 .put("total", pedido.total)
                 .put("origem", pedido.origem)
@@ -243,12 +264,17 @@ object ApiClient {
                 .put("status_solicitado", if (pedido.tipoFinalizacao == "APROVACAO") "EM_APROVACAO" else "ORCAMENTO")
                 .put("manter_orcamento", pedido.tipoFinalizacao == "ORCAMENTO")
                 .put("itens", itens)
-            val o = JSONObject(request("POST", AppConfig.ENDPOINT_CRIAR_PEDIDO, token = token, body = body))
-            val status = o.optString("status", "Orçamento")
+                .put("items", itens)
+
+            val raw = request("POST", AppConfig.ENDPOINT_CRIAR_PEDIDO, token = token, body = body)
+            val json = JSONObject(raw)
+            val o = json.optJSONObject("pedido") ?: json.optJSONObject("order") ?: json
+            val status = o.optString("status", o.optString("order_status", if (pedido.tipoFinalizacao == "APROVACAO") "em_aprovacao" else "em_orcamento"))
+            val numero = o.optString("numero", o.optString("id", o.optString("order_id", mobileUuid)))
             ApiResult(true, PedidoResumo(
-                numero = o.optString("numero", o.optString("id", "APP")),
-                cliente = o.optString("cliente", pedido.nomeCliente),
-                total = o.optString("total_formatado", o.optString("total", pedido.total)),
+                numero = numero,
+                cliente = o.optString("cliente", o.optString("customer", pedido.nomeCliente)),
+                total = o.optString("total_formatado", o.optString("total", o.optString("total_net", pedido.total))),
                 status = status,
                 podeEditar = o.optBoolean("pode_editar", true),
                 empresaId = o.optString("empresa_id", pedido.empresaId)

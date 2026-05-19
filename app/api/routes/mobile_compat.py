@@ -242,6 +242,29 @@ def condicoes_pagamento(db: Session = Depends(get_db), user: User = Depends(curr
     ]
 
 
+@router.get("/config")
+def config_mobile(user: User = Depends(current_mobile_user)):
+    return {
+        "config": {
+            "app_version_label": "Vendas 2026",
+            "mensagem_home": f"Olá, {user.name}. Dados sincronizados com o ERP Web.",
+            "cor_primaria": "#2563EB",
+            "mostrar_notificacoes": True,
+            "mostrar_rota": True,
+            "mostrar_historico": True,
+            "mostrar_campanhas": True,
+            "mostrar_offline": True,
+            "mostrar_empresa": True,
+            "label_novo_pedido": "Novo pedido",
+            "label_pedidos": "Pedidos",
+            "label_produtos": "Produtos",
+            "label_clientes": "Clientes",
+            "label_novo_cliente": "Novo cliente",
+            "label_transportadora": "Transportadora",
+        }
+    }
+
+
 @router.get("/pedidos")
 def pedidos(empresa_id: str | None = Query(default=None), db: Session = Depends(get_db), user: User = Depends(current_mobile_user)):
     q = db.query(Order).options(joinedload(Order.customer)).order_by(Order.id.desc())

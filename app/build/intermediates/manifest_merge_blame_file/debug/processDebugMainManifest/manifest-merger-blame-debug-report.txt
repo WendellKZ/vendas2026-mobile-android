@@ -9,38 +9,38 @@
 9        android:targetSdkVersion="35" />
 10
 11    <uses-permission android:name="android.permission.INTERNET" />
-11-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:2:5-67
-11-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:2:22-64
+11-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:2:5-67
+11-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:2:22-64
 12
 13    <application
-13-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:3:5-17:19
+13-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:3:5-17:19
 14        android:allowBackup="true"
-14-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:4:9-35
+14-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:4:9-35
 15        android:debuggable="true"
 16        android:extractNativeLibs="false"
 17        android:label="Vendas 2026"
-17-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:5:9-36
+17-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:5:9-36
 18        android:theme="@style/AppTheme"
-18-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:6:9-40
+18-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:6:9-40
 19        android:usesCleartextTraffic="true" >
-19-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:7:9-44
+19-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:7:9-44
 20        <activity
-20-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:8:9-16:20
+20-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:8:9-16:20
 21            android:name="com.vendas2026.mobile.MainActivity"
-21-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:9:13-41
+21-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:9:13-41
 22            android:exported="true"
-22-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:11:13-36
+22-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:11:13-36
 23            android:screenOrientation="portrait" >
-23-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:10:13-49
+23-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:10:13-49
 24            <intent-filter>
-24-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:12:13-15:29
+24-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:12:13-15:29
 25                <action android:name="android.intent.action.MAIN" />
-25-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:13:17-69
-25-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:13:25-66
+25-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:13:17-69
+25-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:13:25-66
 26
 27                <category android:name="android.intent.category.LAUNCHER" />
-27-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:14:17-77
-27-->C:\vendas2026_app\app\src\main\AndroidManifest.xml:14:27-74
+27-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:14:17-77
+27-->C:\Users\PC\Documents\Codex\2026-05-19\files-mentioned-by-the-user-erp\vendas_app\vendas2026_app\app\src\main\AndroidManifest.xml:14:27-74
 28            </intent-filter>
 29        </activity>
 30    </application>

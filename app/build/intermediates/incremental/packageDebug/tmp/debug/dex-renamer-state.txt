@@ -1,16 +1,16 @@
-#Fri May 15 17:15:11 BRT 2026
-path.4=2/classes.dex
-path.3=1/classes.dex
-path.2=13/classes.dex
-path.1=0/classes.dex
+#Tue May 19 16:13:47 BRT 2026
+base.0=C\:\\Users\\PC\\Documents\\Codex\\2026-05-19\\files-mentioned-by-the-user-erp\\vendas_app\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
+base.1=C\:\\Users\\PC\\Documents\\Codex\\2026-05-19\\files-mentioned-by-the-user-erp\\vendas_app\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
+base.2=C\:\\Users\\PC\\Documents\\Codex\\2026-05-19\\files-mentioned-by-the-user-erp\\vendas_app\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\13\\classes.dex
+base.3=C\:\\Users\\PC\\Documents\\Codex\\2026-05-19\\files-mentioned-by-the-user-erp\\vendas_app\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\1\\classes.dex
+base.4=C\:\\Users\\PC\\Documents\\Codex\\2026-05-19\\files-mentioned-by-the-user-erp\\vendas_app\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\2\\classes.dex
 path.0=classes.dex
-base.4=C\:\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\2\\classes.dex
-base.3=C\:\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\1\\classes.dex
-base.2=C\:\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\13\\classes.dex
-base.1=C\:\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
-base.0=C\:\\vendas2026_app\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
-renamed.3=classes4.dex
-renamed.2=classes3.dex
-renamed.1=classes2.dex
+path.1=0/classes.dex
+path.2=13/classes.dex
+path.3=1/classes.dex
+path.4=2/classes.dex
 renamed.0=classes.dex
+renamed.1=classes2.dex
+renamed.2=classes3.dex
+renamed.3=classes4.dex
 renamed.4=classes5.dex

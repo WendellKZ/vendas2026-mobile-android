@@ -87,3 +87,17 @@ def test_android_order_approval_is_created_and_returned_with_approval_status(cli
     assert listing.status_code == 200
     rows = listing.json()
     assert any(row["numero"] == created["numero"] and row["status"] == "em_aprovacao" for row in rows)
+
+
+def test_android_remote_config_endpoint_returns_fields_used_by_app(client):
+    _company, headers = _auth_headers(client, "Config")
+
+    response = client.get("/api/mobile/config", headers=headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    config = payload.get("config", payload)
+    assert config["app_version_label"]
+    assert config["cor_primaria"].startswith("#")
+    assert isinstance(config["mostrar_offline"], bool)
+    assert config["label_novo_pedido"]

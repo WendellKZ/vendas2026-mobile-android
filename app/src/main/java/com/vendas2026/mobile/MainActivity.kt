@@ -62,15 +62,21 @@ class MainActivity : Activity() {
     private var ultimaSincronizacaoInfo: String = "Toque em sincronizar para enviar pendências e receber atualizações do ERP."
     private var remoteConfig: MobileRemoteConfig = MobileRemoteConfig()
 
-    private val azul = Color.rgb(37, 99, 235)
-    private val azulClaro = Color.rgb(45, 148, 226)
-    private val azulProfundo = Color.rgb(28, 49, 139)
-    private val azulEscuro = Color.rgb(15, 23, 42)
-    private val cinzaTexto = Color.rgb(71, 85, 105)
-    private val fundo = Color.rgb(246, 248, 252)
-    private val verde = Color.rgb(22, 163, 74)
-    private val vermelho = Color.rgb(220, 38, 38)
-    private val amarelo = Color.rgb(245, 158, 11)
+    // Paleta alinhada ao ERP Web Vendas 2026 / PedidoGo
+    private val azul = Color.rgb(37, 99, 235)          // #2563EB
+    private val azulClaro = Color.rgb(40, 100, 135)    // #286487
+    private val azulProfundo = Color.rgb(23, 56, 92)   // #17385C
+    private val azulEscuro = Color.rgb(15, 23, 42)     // #0F172A
+    private val cinzaTexto = Color.rgb(100, 116, 139)  // #64748B
+    private val fundo = Color.rgb(245, 248, 252)       // #F5F8FC
+    private val verde = Color.rgb(5, 150, 105)         // #059669
+    private val vermelho = Color.rgb(220, 38, 38)      // #DC2626
+    private val amarelo = Color.rgb(217, 119, 6)       // #D97706
+    private val azulBotao = Color.rgb(21, 94, 239)     // #155EEF
+    private val azulBotaoEscuro = Color.rgb(0, 53, 158)// #00359E
+    private val bordaWeb = Color.rgb(219, 228, 239)    // #DBE4EF
+    private val azulSoft = Color.rgb(238, 246, 255)    // #EEF6FF
+    private val inputSoft = Color.rgb(248, 251, 255)   // #F8FBFF
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -178,7 +184,7 @@ class MainActivity : Activity() {
                 gravity = Gravity.CENTER
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(if (active) Color.WHITE else cinzaTexto)
-                setBackgroundColor(if (active) azul else Color.rgb(226, 232, 240))
+                setBackgroundColor(if (active) azul else bordaWeb)
                 setPadding(8, 10, 8, 10)
             }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(3, 0, 3, 0) })
         }
@@ -198,7 +204,7 @@ class MainActivity : Activity() {
         this.text = text.uppercase()
         textSize = 12.5f
         setTextColor(Color.WHITE)
-        background = gradientBg(azulProfundo, azul, 34f)
+        background = gradientBg(azulBotao, azulBotaoEscuro, 34f)
         typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
         minHeight = 56
         setPadding(20, 10, 20, 10)
@@ -209,7 +215,7 @@ class MainActivity : Activity() {
         this.text = text.uppercase()
         textSize = 12f
         setTextColor(azulEscuro)
-        background = roundedBg(Color.rgb(226, 232, 240), 32f)
+        background = roundedBg(Color.WHITE, 32f, bordaWeb)
         typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
         minHeight = 52
         setPadding(18, 8, 18, 8)
@@ -267,7 +273,7 @@ class MainActivity : Activity() {
 
     private fun infoBox(texto: String): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = roundedBg(Color.rgb(239, 246, 255), 26f, Color.rgb(191, 219, 254))
+        background = roundedBg(azulSoft, 26f, Color.rgb(191, 219, 254))
         setPadding(22, 18, 22, 18)
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 8, 0, 18) }
         addView(TextView(context).apply {
@@ -281,7 +287,7 @@ class MainActivity : Activity() {
     private fun formSection(titulo: String, icone: String, vararg campos: View): View {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 32f, bordaWeb)
             setPadding(22, 18, 22, 18)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
         }
@@ -304,7 +310,7 @@ class MainActivity : Activity() {
             isEnabled = enabled
             if (minLinesValue <= 1) setSingleLine(true) else { setSingleLine(false); minLines = minLinesValue }
             setPadding(18, 12, 18, 12)
-            background = roundedBg(Color.rgb(248, 250, 252), 22f, Color.rgb(203, 213, 225))
+            background = roundedBg(inputSoft, 22f, Color.rgb(203, 213, 225))
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 14) }
         }
     }
@@ -332,7 +338,7 @@ class MainActivity : Activity() {
     private fun premiumSearchBox(hintText: String, onBuscar: (String) -> Unit, onLimpar: () -> Unit): View {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 32f, bordaWeb)
             setPadding(22, 18, 22, 18)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
         }
@@ -364,7 +370,7 @@ class MainActivity : Activity() {
 
     private fun miniInfo(label: String, valor: String, destaque: Boolean = false): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = roundedBg(Color.rgb(248, 250, 252), 22f, Color.rgb(226, 232, 240))
+        background = roundedBg(inputSoft, 22f, bordaWeb)
         setPadding(16, 12, 16, 12)
         addView(TextView(context).apply { text = label.uppercase(); textSize = 10f; typeface = Typeface.DEFAULT_BOLD; setTextColor(cinzaTexto) })
         addView(TextView(context).apply { text = valor; textSize = if (destaque) 18f else 14f; typeface = Typeface.DEFAULT_BOLD; setTextColor(if (destaque) azul else azulEscuro) })
@@ -374,7 +380,7 @@ class MainActivity : Activity() {
     private fun servidorAtualCard(): View {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.rgb(239, 246, 255), 28f, Color.rgb(191, 219, 254))
+            background = roundedBg(azulSoft, 28f, Color.rgb(191, 219, 254))
             setPadding(18, 14, 18, 14)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) }
         }
@@ -413,7 +419,7 @@ class MainActivity : Activity() {
 
         val hero = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = gradientBg(azulProfundo, azul, 44f)
+            background = gradientBg(azulProfundo, azulClaro, 44f)
             setPadding(28, 28, 28, 28)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 22) }
         }
@@ -437,7 +443,7 @@ class MainActivity : Activity() {
 
         val cardLogin = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 36f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 36f, bordaWeb)
             setPadding(24, 22, 24, 24)
         }
         cardLogin.addView(TextView(this).apply {
@@ -562,7 +568,7 @@ class MainActivity : Activity() {
             text = "Novo pedido"
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(azulEscuro)
+            setTextColor(azulBotaoEscuro)
             gravity = Gravity.CENTER
             background = roundedBg(Color.WHITE, 28f)
             setPadding(18, 12, 18, 12)
@@ -572,7 +578,7 @@ class MainActivity : Activity() {
             text = "Pedidos"
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(azulEscuro)
+            setTextColor(azulBotaoEscuro)
             gravity = Gravity.CENTER
             background = roundedBg(Color.WHITE, 28f)
             setPadding(18, 12, 18, 12)
@@ -636,7 +642,7 @@ class MainActivity : Activity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            background = roundedBg(Color.rgb(239, 246, 255), 26f, Color.rgb(191, 219, 254))
+            background = roundedBg(azulSoft, 26f, Color.rgb(191, 219, 254))
             setPadding(18, 14, 18, 14)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 14) }
             addView(TextView(context).apply { text = "🏢"; textSize = 22f; setPadding(0,0,12,0) })
@@ -674,7 +680,7 @@ class MainActivity : Activity() {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            background = if (destaque) gradientBg(azulProfundo, azul, 36f) else roundedBg(Color.WHITE, 36f, Color.rgb(226, 232, 240))
+            background = if (destaque) gradientBg(azulBotao, azulBotaoEscuro, 36f) else roundedBg(Color.WHITE, 36f, bordaWeb)
             setPadding(16, 24, 16, 22)
             minimumHeight = 178
             setOnClickListener { onClick() }
@@ -713,7 +719,7 @@ class MainActivity : Activity() {
 
     private fun kpi(valor: String, label: String): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = roundedBg(Color.WHITE, 26f, Color.rgb(226, 232, 240))
+        background = roundedBg(Color.WHITE, 26f, bordaWeb)
         setPadding(20, 18, 20, 18)
         addView(TextView(context).apply { text = valor; textSize = 28f; typeface = Typeface.DEFAULT_BOLD; setTextColor(azul) })
         addView(TextView(context).apply { text = label; textSize = 13f; setTextColor(cinzaTexto) })
@@ -722,7 +728,7 @@ class MainActivity : Activity() {
     private fun card(titulo: String, desc: String, btn: String, onClick: () -> Unit): View {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 32f, bordaWeb)
             setPadding(28, 24, 28, 24)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 20) }
         }
@@ -737,7 +743,7 @@ class MainActivity : Activity() {
     private fun featureCard(icone: String, titulo: String, desc: String, btn: String, onClick: () -> Unit): View {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 32f, bordaWeb)
             setPadding(24, 20, 24, 20)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) }
         }
@@ -746,7 +752,7 @@ class MainActivity : Activity() {
             text = icone
             textSize = 28f
             gravity = Gravity.CENTER
-            background = roundedBg(Color.rgb(239, 246, 255), 24f, Color.rgb(191, 219, 254))
+            background = roundedBg(azulSoft, 24f, Color.rgb(191, 219, 254))
             setPadding(14, 10, 14, 10)
         })
         row.addView(LinearLayout(this).apply {
@@ -849,7 +855,7 @@ class MainActivity : Activity() {
     private fun clienteConsultaCard(c: ClienteResumo): View {
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 32f, bordaWeb)
             setPadding(22, 18, 22, 18)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
         }
@@ -858,7 +864,7 @@ class MainActivity : Activity() {
             text = "👤"
             textSize = 28f
             gravity = Gravity.CENTER
-            background = roundedBg(Color.rgb(239, 246, 255), 24f, Color.rgb(191, 219, 254))
+            background = roundedBg(azulSoft, 24f, Color.rgb(191, 219, 254))
             setPadding(16, 10, 16, 10)
         })
         topo.addView(LinearLayout(this).apply {
@@ -1272,27 +1278,44 @@ class MainActivity : Activity() {
         root.addView(topBackBar("Itens") { showSelecionarCondicaoPagamento(condicoesPagamentoCache) })
         root.addView(pedidoHeader(4, "4. Adicione os itens", ""))
         root.addView(resumoPedidoCard(true))
-        root.addView(sectionLabel("SKU / código de barras"))
+
+        root.addView(sectionLabel("Adicionar produto"))
         val codigoSku = EditText(this).apply {
-            hint = "Digite ou leia o SKU"
+            hint = "Digite SKU, nome ou leia QR/código"
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+            setPadding(24, 18, 24, 18)
+        }
+        codigoSku.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                adicionarSkuAoCarrinho(codigoSku.text.toString(), codigoSku)
+                true
+            } else false
         }
         root.addView(codigoSku)
+
         val rowLeitor = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        rowLeitor.addView(button("Ler / adicionar") {
+        rowLeitor.addView(button("Adicionar / Ler código") {
             adicionarSkuAoCarrinho(codigoSku.text.toString(), codigoSku)
         }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
         rowLeitor.addView(secondaryButton("Limpar") { codigoSku.setText(""); codigoSku.requestFocus() }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
         root.addView(rowLeitor)
 
-        root.addView(sectionLabel("Buscar produto"))
-        val busca = EditText(this).apply { hint = "Código ou nome do produto"; setSingleLine(true) }
+        root.addView(TextView(this).apply {
+            text = "Use o mesmo campo para digitar, colar ou ler o código. Após adicionar, o campo limpa e fica pronto para o próximo item."
+            textSize = 12f
+            setTextColor(cinzaTexto)
+            setPadding(6, 6, 6, 14)
+        })
+
+        root.addView(sectionLabel("Sugestões rápidas"))
+        val busca = EditText(this).apply { hint = "Filtrar por SKU, nome ou código de barras"; setSingleLine(true) }
         root.addView(busca)
         val rowBusca = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        rowBusca.addView(button("Buscar") {
+        rowBusca.addView(button("Filtrar") {
             val q = busca.text.toString().trim()
-            val filtrados = if (q.isBlank()) produtosCache else produtosCache.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) }
+            val filtrados = if (q.isBlank()) produtosCache else produtosCache.filter { it.codigo.contains(q, true) || it.nome.contains(q, true) || it.descricao.contains(q, true) }
             showMontarCarrinho(filtrados)
         }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(0,0,8,0) })
         rowBusca.addView(secondaryButton("Limpar") { showMontarCarrinho(produtosCache) }, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(8,0,0,0) })
@@ -1449,7 +1472,7 @@ class MainActivity : Activity() {
                 observacaoPedido = obsInput.text.toString()
                 gerarPedidoLocal("ORCAMENTO")
             }, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 10) })
-            row.addView(successButton("Enviar para aprovação") {
+            row.addView(successButton("Enviar pedido") {
                 observacaoPedido = obsInput.text.toString()
                 gerarPedidoLocal("APROVACAO")
             })
@@ -1515,26 +1538,25 @@ class MainActivity : Activity() {
             val token = usuarioLogado?.token ?: ""
             val result = MobileRepository.criarPedido(token, envio)
             if (result.ok && result.data != null) {
-                // V36: não dar falso positivo. Depois do POST, consulta o ERP para confirmar
-                // se o pedido voltou na listagem online da mesma empresa.
-                val confirmacao = if (AppConfig.MOCK_MODE) ApiResult(true, listOf(result.data)) else MobileRepository.pedidos(token, envio.empresaId)
-                val confirmado = confirmacao.ok && confirmacao.data?.any { it.numero == result.data.numero } == true
+                // V41: se o ERP retornou HTTP 2xx com número/id do pedido, consideramos integrado.
+                // A listagem pode demorar ou estar filtrada por empresa/vendedor; por isso não bloqueamos mais
+                // o sucesso apenas porque o GET /pedidos não encontrou o pedido imediatamente.
+                val atualizacao = if (AppConfig.MOCK_MODE) ApiResult(true, listOf(result.data)) else MobileRepository.pedidos(token, envio.empresaId)
+                if (atualizacao.ok && atualizacao.data != null) {
+                    mesclarPedidosRemotos(atualizacao.data)
+                    salvarCacheOffline()
+                }
                 runOnUiThread {
-                    if (confirmado || AppConfig.MOCK_MODE) {
-                        pedidosCriados.removeAll { it.numero == result.data.numero }
-                        carrinho.clear()
-                        clienteSelecionado = null
-                        transportadoraSelecionada = null
-                        condicaoPagamentoSelecionada = null
-                        observacaoPedido = ""
-                        val msg = if (tipoFinalizacao == "APROVACAO") "Pedido ${result.data.numero} enviado para aprovação" else "Orçamento ${result.data.numero} salvo"
-                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-                        showPedidoCriado(result.data)
-                    } else {
-                        pedidosPendentesSync.add(envio)
-                        Toast.makeText(this, "O ERP respondeu, mas o pedido não apareceu na consulta. Salvei em pendências para sincronizar e evitar falso positivo.", Toast.LENGTH_LONG).show()
-                        showSincronizacaoOffline()
-                    }
+                    pedidosCriados.removeAll { it.numero == result.data.numero }
+                    pedidosCriados.add(0, result.data)
+                    carrinho.clear()
+                    clienteSelecionado = null
+                    transportadoraSelecionada = null
+                    condicaoPagamentoSelecionada = null
+                    observacaoPedido = ""
+                    val msg = if (tipoFinalizacao == "APROVACAO") "Pedido ${result.data.numero} enviado para aprovação no ERP" else "Orçamento ${result.data.numero} salvo no ERP"
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                    showPedidoCriado(result.data)
                 }
             } else {
                 runOnUiThread {
@@ -1554,6 +1576,21 @@ class MainActivity : Activity() {
         root.addView(successButton("Compartilhar PDF / WhatsApp") { compartilharPedidoResumo(p) })
         root.addView(button("Pedidos") { loadPedidos() })
         root.addView(secondaryButton("Voltar ao painel") { showHome() })
+    }
+
+    private fun mesclarPedidosRemotos(remotos: List<PedidoResumo>) {
+        remotos.asReversed().forEach { remoto ->
+            pedidosCriados.removeAll { it.numero == remoto.numero }
+            pedidosCriados.add(0, remoto)
+        }
+    }
+
+    private fun salvarCacheOffline() {
+        getSharedPreferences("vendas2026_config", MODE_PRIVATE)
+            .edit()
+            .putInt("pedidos_cache_total", pedidosCriados.size)
+            .putString("ultima_sincronizacao_info", ultimaSincronizacaoInfo)
+            .apply()
     }
 
     private fun loadPedidos() {
@@ -1591,7 +1628,7 @@ class MainActivity : Activity() {
         val corStatus = statusColor(p.status)
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 32f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 32f, bordaWeb)
             setPadding(22, 18, 22, 18)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 18) }
         }
@@ -1600,7 +1637,7 @@ class MainActivity : Activity() {
             text = "🧾"
             textSize = 28f
             gravity = Gravity.CENTER
-            background = roundedBg(Color.rgb(239, 246, 255), 24f, Color.rgb(191, 219, 254))
+            background = roundedBg(azulSoft, 24f, Color.rgb(191, 219, 254))
             setPadding(16, 10, 16, 10)
         })
         topo.addView(LinearLayout(this).apply {
@@ -1715,7 +1752,7 @@ class MainActivity : Activity() {
         if (resId != 0) setImageResource(resId) else setImageResource(resources.getIdentifier("produto_padrao", "drawable", packageName))
         scaleType = ImageView.ScaleType.CENTER_CROP
         adjustViewBounds = true
-        setBackgroundColor(Color.rgb(226, 232, 240))
+        setBackgroundColor(bordaWeb)
         layoutParams = LinearLayout.LayoutParams(-1, altura).apply { setMargins(0, 0, 0, 8) }
     }
 
@@ -1727,7 +1764,7 @@ class MainActivity : Activity() {
 
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = roundedBg(Color.WHITE, 34f, Color.rgb(226, 232, 240))
+            background = roundedBg(Color.WHITE, 34f, bordaWeb)
             setPadding(24, 22, 24, 24)
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, 16) }
         }

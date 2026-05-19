@@ -4,7 +4,7 @@
             "outputFile": "com.vendas2026.mobile.app-mergeDebugResources-2:/values/values.xml",
             "map": [
                 {
-                    "source": "C:\\vendas2026_app\\app\\src\\main\\res\\values\\styles.xml",
+                    "source": "C:\\Users\\PC\\Documents\\Codex\\2026-05-19\\files-mentioned-by-the-user-erp\\vendas_app\\vendas2026_app\\app\\src\\main\\res\\values\\styles.xml",
                     "from": {
                         "startLines": "1",
                         "startColumns": "4",

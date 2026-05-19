@@ -2,7 +2,7 @@ V37 - Orçamento e integração corrigidos
 
 Ajustes aplicados:
 - Mantido botão Manter como orçamento no carrinho.
-- Botão Enviar para aprovação agora envia tipo_finalizacao=APROVACAO.
+- Botão Enviar pedido agora envia tipo_finalizacao=APROVACAO.
 - Orçamento envia tipo_finalizacao=ORCAMENTO.
 - Payload do pedido inclui acao, status_solicitado e manter_orcamento.
 - App só confirma sucesso após validar resposta/consulta do ERP.
